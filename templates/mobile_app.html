@@ -425,9 +425,8 @@
                 isAdminLoggedIn = true;
                 closeAdminLogin();
                 setTimeout(() => { document.getElementById('userInput').value = ''; }, 100);
-                document.getElementById('adminBtn').style.display = 'flex';
                 document.getElementById('uploadMemoBtn').style.display = 'flex';
-                if (window.showAdminModeButton) window.showAdminModeButton(); // ← add this
+                if (window.showAdminModeButton) window.showAdminModeButton();
                 document.getElementById('settingsBtn').innerHTML = '<i class="fas fa-sign-out-alt"></i>';
                 document.getElementById('settingsBtn').title = 'Logout';
                 document.getElementById('settingsBtn').onclick = adminLogout;
@@ -444,10 +443,8 @@
 
     function adminLogout() {
         isAdminLoggedIn = false;
-        document.getElementById('adminBtn').style.display = 'none';
         document.getElementById('uploadMemoBtn').style.display = 'none';
-            if (window.hideAdminModeButton) window.hideAdminModeButton(); // ← add this
-
+        if (window.hideAdminModeButton) window.hideAdminModeButton();
         document.getElementById('settingsBtn').innerHTML = '<i class="fas fa-cog"></i>';
         document.getElementById('settingsBtn').title = 'Admin Login';
         document.getElementById('settingsBtn').onclick = openAdminLogin;
