@@ -605,6 +605,9 @@ def admin_login():
         cursor = conn.cursor(dictionary=True)
         cursor.execute("SELECT * FROM admins WHERE email = %s AND password = %s", (email, password))
         admin = cursor.fetchone()
+        cursor.execute("SELECT * FROM admins WHERE email = %s AND password = %s", (email, password))
+        admin = cursor.fetchone()
+        print(f"🔍 Login: email={email} password={password} result={admin}")
         conn.close()
         if admin:
             return jsonify({'success': True, 'name': admin.get('name', '')})
