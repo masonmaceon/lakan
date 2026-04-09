@@ -424,6 +424,7 @@
             if (data.success) {
                 isAdminLoggedIn = true;
                 closeAdminLogin();
+                setTimeout(() => { document.getElementById('userInput').value = ''; }, 100);
                 document.getElementById('adminBtn').style.display = 'flex';
                 document.getElementById('uploadMemoBtn').style.display = 'flex';
                 if (window.showAdminModeButton) window.showAdminModeButton(); // ← add this
