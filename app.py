@@ -624,6 +624,28 @@ def admin_login():
             return jsonify({'success': False, 'error': 'Invalid email or password.'})
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)})
+    
+@app.route('/admin/upload-memo', methods=['POST'])
+def upload_memo():
+        try:
+            if 'memo' not in request.files:
+                return jsonify({'error': 'No file provided'}), 400
+            
+            file = request.files['memo']
+            if file.filename == '':
+                return jsonify({'error': 'No file selected'}), 400
+            
+            if not allowed_file(file.filename):
+                return jsonify({'error': 'Only PDF files allowed'}), 400
+            
+            filename = secure_filename(file.filename)
+            filepath = os.path.join(UPLOAD_FOLDER, filename)
+            file.save(filepath)
+            
+            return jsonify({'message': f'Memo "{filename}" uploaded successfully!'})
+        
+        except Exception as e:
+            return jsonify({'error': str(e)}), 500
 
 # ==================== START SERVER ====================
 
