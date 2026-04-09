@@ -4,9 +4,7 @@ python-dotenv
 requests
 pillow
 mysql-connector-python
-inference
 opencv-python-headless
-torch
-torchvision
 werkzeug
 gunicorn
+inference-sdk
