@@ -5,3 +5,4 @@ __pycache__/
 temp_uploads/ 
 uploads/ 
 dataset/ 
+firebase-key.json 
