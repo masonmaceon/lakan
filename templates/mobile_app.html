@@ -432,7 +432,7 @@
                 document.getElementById('settingsBtn').title = 'Logout';
                 document.getElementById('settingsBtn').onclick = adminLogout;
                 if (window.mobileApp)
-                        window.mobileApp.addMessage('bot', `✅ Welcome, ${data.name||'Admin'}! Admin tools are now visible.`);            } else {
+                        window.mobileApp.addMessage('bot', `✅ Welcome, ${data.name}! Administrative tools are now visible.`);            } else {
                 err.textContent = data.error || 'Invalid email or password.';
                 err.style.display = 'block';
             }
