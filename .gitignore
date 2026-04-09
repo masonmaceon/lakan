@@ -1,2 +1,7 @@
-.env
-firebase-key.json
+venv/ 
+__pycache__/ 
+*.pyc 
+.env 
+temp_uploads/ 
+uploads/ 
+dataset/ 
