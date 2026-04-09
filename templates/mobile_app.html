@@ -491,22 +491,19 @@
             err.textContent = 'Failed to send request. Please try again.';
             err.style.display = 'block';
         }
-            window.recenterMap = function() {
-            if (!window.map) return;
-            
-            // If there's an active route, fit to it
-            if (window.mobileApp && window.mobileApp.getMapController()) {
-                const mc = window.mobileApp.getMapController();
-                if (mc.currentRoute && mc.currentRoute.coordinates && mc.currentRoute.coordinates.length > 0) {
-                    mc.fitToRoute(mc.currentRoute);
-                    return;
-                }
-            }
-            
-            // Otherwise recenter to campus
-            window.map.setView([14.3217, 120.9636], 17);
-        }
     }
+
+    window.recenterMap = function() {
+        if (!window.map) return;
+        if (window.mobileApp && window.mobileApp.getMapController()) {
+            const mc = window.mobileApp.getMapController();
+            if (mc.currentRoute && mc.currentRoute.coordinates && mc.currentRoute.coordinates.length > 0) {
+                mc.fitToRoute(mc.currentRoute);
+                return;
+            }
+        }
+        window.map.setView([14.3217, 120.9636], 17);
+    };
     </script>
 
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
