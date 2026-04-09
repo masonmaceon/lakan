@@ -15,6 +15,7 @@ from PIL import Image
 from dotenv import load_dotenv
 from mysql.connector import pooling
 import mysql.connector
+import requests
 
 # Load environment variables
 load_dotenv()
