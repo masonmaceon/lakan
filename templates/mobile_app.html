@@ -92,7 +92,7 @@
                 <i class="fas fa-camera"></i>
             </button>
             <!-- Admin crosshairs - hidden until admin logs in -->
-            <button class="nav-icon" id="adminBtn" title="Admin GPS Mode" style="display:none">
+            <button class="nav-icon" id="recenterBtn" title="Recenter Map" onclick="recenterMap()">
                 <i class="fas fa-crosshairs"></i>
             </button>
             <!-- Admin memo upload - hidden until admin logs in -->
@@ -494,6 +494,21 @@
         } catch(e) {
             err.textContent = 'Failed to send request. Please try again.';
             err.style.display = 'block';
+        }
+                function recenterMap() {
+            if (!window.map) return;
+            
+            // If there's an active route, fit to it
+            if (window.mobileApp && window.mobileApp.getMapController()) {
+                const mc = window.mobileApp.getMapController();
+                if (mc.currentRoute && mc.currentRoute.coordinates && mc.currentRoute.coordinates.length > 0) {
+                    mc.fitToRoute(mc.currentRoute);
+                    return;
+                }
+            }
+            
+            // Otherwise recenter to campus
+            window.map.setView([14.3217, 120.9636], 17);
         }
     }
     </script>
