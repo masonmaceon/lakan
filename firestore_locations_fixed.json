@@ -1,0 +1,148 @@
+[
+  {
+    "coordinates": [
+      14.320744,
+      120.962984
+    ],
+    "name": "Ayuntamiento de Gonzales Building",
+    "id": "Admin"
+  },
+  {
+    "coordinates": [
+      14.323751375633886,
+      120.95819680416969
+    ],
+    "id": "CBAA"
+  },
+  {
+    "coordinates": [
+      14.323247310827597,
+      120.95951498463104
+    ],
+    "id": "CTH"
+  },
+  {
+    "name ": "College of Tourism and Hospitality Management",
+    "coordinates": [
+      14.32163,
+      120.962651
+    ],
+    "id": "CTHM"
+  },
+  {
+    "coordinates": [
+      14.322340590478388,
+      120.95968652958635
+    ],
+    "id": "FCH"
+  },
+  {
+    "coordinates": [
+      14.320247,
+      120.962874
+    ],
+    "name": "Dr. Fe Del Mundo Hall (previously COS)",
+    "id": "FDH"
+  },
+  {
+    "coordinates": [
+      14.322870591661603,
+      120.95893651915472
+    ],
+    "id": "GMH"
+  },
+  {
+    "coordinates": [
+      14.321726,
+      120.963558
+    ],
+    "id": "Gate 1"
+  },
+  {
+    "coordinates": [
+      14.322526,
+      120.96341
+    ],
+    "id": "Gate 2"
+  },
+  {
+    "coordinates": [
+      14.3282513735531,
+      120.95697519592055
+    ],
+    "id": "Gate 3"
+  },
+  {
+    "coordinates": [
+      14.320437,
+      120.963697
+    ],
+    "id": "Gate 4"
+  },
+  {
+    "coordinates": [
+      14.32242,
+      120.96296
+    ],
+    "id": "ICTC"
+  },
+  {
+    "coordinates": [
+      14.321201,
+      120.962876
+    ],
+    "id": "JFH"
+  },
+  {
+    "coordinates": [
+      14.322142123074332,
+      120.9598970530881
+    ],
+    "id": "LDH"
+  },
+  {
+    "coordinates": [
+      14.320715,
+      120.961795
+    ],
+    "id": "Library"
+  },
+  {
+    "coordinates": [
+      14.323762552330676,
+      120.95875550652632
+    ],
+    "id": "MTH"
+  },
+  {
+    "coordinates": [
+      14.320912,
+      120.96286
+    ],
+    "id": "PCH"
+  },
+  {
+    "coordinates": [
+      14.320382,
+      120.962015
+    ],
+    "name": "Residencia de San Miguel",
+    "id": "Residencia"
+  },
+  {
+    "coordinates": [
+      14.321522543715924,
+      120.96011706908381
+    ],
+    "id": "Square"
+  },
+  {
+    "id": "CEAT",
+    "name": "MLH",
+    "coordinates": [
+      14.322807322330114,
+      120.95853693300201
+    ],
+    "type": "building"
+  }
+]

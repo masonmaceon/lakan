@@ -1,0 +1,121 @@
+body {
+    font-family: 'Arial', sans-serif;
+    background-color: #f4f4f4;
+    display: flex;
+    justify-content: center;
+    padding: 20px;
+    margin: 0;
+}
+
+.chat-container {
+    width: 400px;
+    background: white;
+    border-radius: 10px;
+    box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    overflow: hidden;
+}
+
+.chat-header {
+    background: #006341;
+    color: white;
+    padding: 15px;
+    text-align: center;
+    font-weight: bold;
+    font-size: 1.2em;
+}
+
+#chat-messages {
+    height: 400px;
+    padding: 15px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+}
+
+.message {
+    margin-bottom: 10px;
+    padding: 10px;
+    border-radius: 10px;
+    max-width: 80%;
+    word-wrap: break-word;
+}
+
+.user-message {
+    background: #e3f2fd;
+    align-self: flex-end;
+}
+
+.bot-message {
+    background: #f1f1f1;
+    align-self: flex-start;
+}
+
+.map-controls {
+    padding: 10px;
+    text-align: center;
+    border-top: 1px solid #ddd;
+}
+
+#map-container {
+    height: 300px;
+    display: none;
+    margin: 10px;
+    border-radius: 10px;
+    border: 1px solid #ddd;
+}
+
+.input-area {
+    display: flex;
+    padding: 10px;
+    border-top: 1px solid #ddd;
+    background: #f9f9f9;
+}
+
+#user-input {
+    flex: 1;
+    padding: 12px;
+    border: 1px solid #ddd;
+    border-radius: 20px;
+    margin-right: 10px;
+    font-size: 14px;
+}
+
+button {
+    background: #006341;
+    color: white;
+    border: none;
+    padding: 12px 20px;
+    border-radius: 20px;
+    cursor: pointer;
+    font-size: 14px;
+    transition: background 0.3s;
+}
+
+button:hover {
+    background: #004d33;
+}
+
+#map-container {
+    width: 100%;
+    height: 300px;
+    border: 2px solid #006341;
+    border-radius: 10px;
+    margin: 10px 0;
+    background-color: #f0f0f0;
+}
+
+/* Make sure the container is properly sized */
+.chat-container {
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+}
+
+#chat-messages {
+    flex: 1;
+    overflow-y: auto;
+}
+
+#map-container {
+    flex-shrink: 0; /* Prevent map from shrinking */
+}

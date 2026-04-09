@@ -1,0 +1,736 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Campus Data Collector - Lakán</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <style>
+        body {
+            margin: 0;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+        }
+        
+        #map {
+            position: absolute;
+            top: 0;
+            bottom: 350px;
+            width: 100%;
+        }
+        
+        .control-panel {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 350px;
+            background: #006341;
+            color: white;
+            overflow-y: auto;
+        }
+        
+        .tabs {
+            display: flex;
+            background: rgba(0,0,0,0.2);
+        }
+        
+        .tab {
+            flex: 1;
+            padding: 15px;
+            text-align: center;
+            cursor: pointer;
+            font-weight: bold;
+            border-bottom: 3px solid transparent;
+        }
+        
+        .tab.active {
+            background: #006341;
+            border-bottom: 3px solid white;
+        }
+        
+        .tab:hover {
+            background: rgba(255,255,255,0.1);
+        }
+        
+        .tab-content {
+            display: none;
+            padding: 12px 20px;
+        }
+        
+        .tab-content.active {
+            display: block;
+        }
+        
+        .control-panel h3 {
+            margin-top: 0;
+        }
+        
+        .point-list {
+            background: rgba(255,255,255,0.1);
+            padding: 10px;
+            border-radius: 5px;
+            margin: 8px 0;
+            max-height: 60px;
+            overflow-y: auto;
+            font-size: 12px;
+            font-family: monospace;
+        }
+        
+        .point-item {
+            padding: 2px 0;
+        }
+        
+        .btn {
+            background: white;
+            color: #006341;
+            border: none;
+            padding: 10px 20px;
+            margin: 5px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+        
+        .btn:hover { background: #f0f0f0; }
+        .btn.danger { background: #dc3545; color: white; }
+        .btn.success { background: #28a745; color: white; }
+        
+        .json-output {
+            background: rgba(0,0,0,0.3);
+            padding: 10px;
+            border-radius: 5px;
+            margin-top: 8px;
+            font-family: monospace;
+            font-size: 11px;
+            max-height: 50px;
+            overflow-y: auto;
+        }
+        
+        .instructions {
+            background: rgba(255,255,255,0.1);
+            padding: 8px 10px;
+            border-radius: 5px;
+            margin-bottom: 8px;
+            font-size: 13px;
+        }
+        
+        input[type="text"] {
+            padding: 8px;
+            border-radius: 5px;
+            border: none;
+            margin: 5px;
+            width: 200px;
+        }
+        
+        select {
+            padding: 8px;
+            border-radius: 5px;
+            border: none;
+            margin: 5px;
+        }
+        
+        .success-message, .error-message {
+            padding: 10px;
+            border-radius: 5px;
+            margin: 6px 0;
+            display: none;
+        }
+        
+        .success-message { background: #28a745; }
+        .error-message { background: #dc3545; }
+        
+        .location-marker {
+            width: 20px;
+            height: 20px;
+            background: #ff6b6b;
+            border: 2px solid white;
+            border-radius: 50%;
+        }
+
+        /* ── Auto-interpolation toggle ── */
+        .interpolate-bar {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            background: rgba(255,255,255,0.12);
+            border-radius: 6px;
+            padding: 7px 12px;
+            margin: 6px 0;
+        }
+
+        .interpolate-bar label {
+            font-size: 13px;
+            font-weight: 600;
+            flex: 1;
+        }
+
+        .interpolate-bar span {
+            font-size: 12px;
+            opacity: 0.8;
+        }
+
+        /* Toggle switch */
+        .switch {
+            position: relative;
+            display: inline-block;
+            width: 44px;
+            height: 24px;
+            flex-shrink: 0;
+        }
+
+        .switch input { opacity: 0; width: 0; height: 0; }
+
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            inset: 0;
+            background: rgba(255,255,255,0.3);
+            border-radius: 24px;
+            transition: 0.3s;
+        }
+
+        .slider:before {
+            content: '';
+            position: absolute;
+            height: 18px;
+            width: 18px;
+            left: 3px;
+            bottom: 3px;
+            background: white;
+            border-radius: 50%;
+            transition: 0.3s;
+        }
+
+        input:checked + .slider { background: #28a745; }
+        input:checked + .slider:before { transform: translateX(20px); }
+
+        .point-count-badge {
+            background: rgba(255,255,255,0.2);
+            border-radius: 12px;
+            padding: 2px 10px;
+            font-size: 12px;
+            font-weight: bold;
+            margin-left: 8px;
+        }
+    </style>
+</head>
+<body>
+    <div id="map"></div>
+    
+    <div class="control-panel">
+        <div class="tabs">
+            <div class="tab active" onclick="switchTab('pathways')">🗺️ Pathways</div>
+            <div class="tab" onclick="switchTab('locations')">📍 Locations</div>
+        </div>
+        
+        <!-- PATHWAYS TAB -->
+        <div id="pathways-tab" class="tab-content active">
+            <div class="instructions">
+                📍 <strong>Click map to add pathway points</strong> • Right-click to undo last point
+            </div>
+
+            <!-- Auto-interpolation toggle -->
+            <div class="interpolate-bar">
+                <label>⚡ Auto-fill points every 10m</label>
+                <span id="interp-status">OFF</span>
+                <label class="switch">
+                    <input type="checkbox" id="interpolate-toggle" onchange="updateInterpStatus()">
+                    <span class="slider"></span>
+                </label>
+            </div>
+            
+            <div>
+                <input type="text" id="pathway-id" placeholder="Pathway ID (e.g., gate1_to_cbaa)">
+                <input type="text" id="pathway-name" placeholder="Pathway Name">
+                <select id="pathway-type">
+                    <option value="pedestrian">🚶 Pedestrian</option>
+                    <option value="vehicle">🚗 Vehicle</option>
+                    <option value="mixed">🚶🚗 Mixed</option>
+                </select>
+            </div>
+            
+            <div class="point-list" id="pathway-point-list">
+                No points yet. Click on the map to start!
+            </div>
+            
+            <div>
+                <button class="btn" onclick="copyPathwayJSON()">📋 Copy JSON</button>
+                <button class="btn" onclick="undoLastPathway()">↩️ Undo</button>
+                <button class="btn danger" onclick="clearPathway()">🗑️ Clear</button>
+                <button class="btn success" onclick="savePathway()">💾 Save Pathway</button>
+            </div>
+            
+            <div class="success-message" id="pathway-success"></div>
+            <div class="error-message" id="pathway-error"></div>
+            <div class="json-output" id="pathway-json-output">JSON will appear here...</div>
+        </div>
+        
+        <!-- LOCATIONS TAB -->
+        <div id="locations-tab" class="tab-content">
+            <div class="instructions">
+                📍 <strong>Click on map to place a new location</strong><br>
+                🏛️ Add buildings, amenities, landmarks, etc.
+            </div>
+            
+            <div>
+                <input type="text" id="location-id" placeholder="Location ID (e.g., gym, clinic)">
+                <input type="text" id="location-name" placeholder="Location Name (e.g., Sports Gym)">
+                <select id="location-type">
+                    <option value="building">🏛️ Building</option>
+                    <option value="amenity">🏥 Amenity</option>
+                    <option value="service">🍽️ Service</option>
+                    <option value="landmark">🗿 Landmark</option>
+                    <option value="gate">🚪 Gate/Entrance</option>
+                    <option value="parking">🅿️ Parking</option>
+                </select>
+            </div>
+            
+            <div class="point-list" id="location-info">
+                Click on the map to place location marker
+            </div>
+            
+            <div>
+                <button class="btn" onclick="copyLocationJSON()">📋 Copy JSON</button>
+                <button class="btn danger" onclick="clearLocation()">🗑️ Clear</button>
+                <button class="btn success" onclick="saveLocation()">💾 Save Location</button>
+            </div>
+            
+            <div class="success-message" id="location-success"></div>
+            <div class="error-message" id="location-error"></div>
+            <div class="json-output" id="location-json-output">JSON will appear here...</div>
+        </div>
+    </div>
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script>
+        const INTERPOLATION_INTERVAL = 10; // meters
+
+        const map = L.map('map').setView([14.3217, 120.9636], 17);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '© OpenStreetMap contributors',
+            maxZoom: 19
+        }).addTo(map);
+
+        let currentMode = 'pathways';
+        // rawPoints = only the points the user physically clicked
+        // pathwayPoints = rawPoints + any interpolated points (what gets saved)
+        let rawPoints = [];
+        let pathwayPoints = [];
+        let pathwayMarkers = [];   // green circles for raw clicks
+        let interpMarkers = [];    // small white circles for interpolated points
+        let pathwayPolyline = null;
+        let locationMarker = null;
+        let locationCoords = null;
+
+        // ── Toggle ──────────────────────────────────────────
+        function updateInterpStatus() {
+            const on = document.getElementById('interpolate-toggle').checked;
+            document.getElementById('interp-status').textContent = on ? 'ON' : 'OFF';
+            rebuildPathwayPoints();
+            updateDisplay();
+        }
+
+        function isInterpolating() {
+            return document.getElementById('interpolate-toggle').checked;
+        }
+
+        // ── Haversine distance (meters) ──────────────────────
+        function haversineDistance(a, b) {
+            const R = 6371000;
+            const dLat = (b[0] - a[0]) * Math.PI / 180;
+            const dLng = (b[1] - a[1]) * Math.PI / 180;
+            const lat1 = a[0] * Math.PI / 180;
+            const lat2 = b[0] * Math.PI / 180;
+            const x = Math.sin(dLat/2) * Math.sin(dLat/2) +
+                      Math.cos(lat1) * Math.cos(lat2) *
+                      Math.sin(dLng/2) * Math.sin(dLng/2);
+            return R * 2 * Math.atan2(Math.sqrt(x), Math.sqrt(1-x));
+        }
+
+        // ── Interpolate between two points every N meters ───
+        function interpolateBetween(a, b, intervalMeters) {
+            const dist = haversineDistance(a, b);
+            if (dist <= intervalMeters) return []; // no extras needed
+
+            const steps = Math.floor(dist / intervalMeters);
+            const pts = [];
+            for (let i = 1; i < steps; i++) {
+                const t = i / steps;
+                pts.push([
+                    a[0] + (b[0] - a[0]) * t,
+                    a[1] + (b[1] - a[1]) * t
+                ]);
+            }
+            return pts;
+        }
+
+        // ── Rebuild pathwayPoints from rawPoints ─────────────
+        function rebuildPathwayPoints() {
+            // Remove old interpolated markers
+            interpMarkers.forEach(m => map.removeLayer(m));
+            interpMarkers = [];
+
+            if (!isInterpolating() || rawPoints.length < 2) {
+                pathwayPoints = [...rawPoints];
+                return;
+            }
+
+            pathwayPoints = [];
+            for (let i = 0; i < rawPoints.length; i++) {
+                pathwayPoints.push(rawPoints[i]);
+                if (i < rawPoints.length - 1) {
+                    const extras = interpolateBetween(rawPoints[i], rawPoints[i+1], INTERPOLATION_INTERVAL);
+                    extras.forEach(pt => {
+                        pathwayPoints.push(pt);
+                        // Show tiny marker for interpolated points
+                        const m = L.circleMarker(pt, {
+                            radius: 3,
+                            fillColor: '#ffffff',
+                            color: '#aaffaa',
+                            weight: 1,
+                            fillOpacity: 0.7,
+                            interactive: false
+                        }).addTo(map);
+                        interpMarkers.push(m);
+                    });
+                }
+            }
+        }
+
+        // ── Tab switching ─────────────────────────────────────
+        function switchTab(tab) {
+            currentMode = tab;
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+            if (tab === 'pathways') {
+                document.querySelectorAll('.tab')[0].classList.add('active');
+                document.getElementById('pathways-tab').classList.add('active');
+            } else {
+                document.querySelectorAll('.tab')[1].classList.add('active');
+                document.getElementById('locations-tab').classList.add('active');
+            }
+            updateDisplay();
+        }
+
+        // ── Map click ─────────────────────────────────────────
+        map.on('click', function(e) {
+            if (currentMode === 'pathways') addPathwayPoint(e.latlng.lat, e.latlng.lng);
+            else setLocationPoint(e.latlng.lat, e.latlng.lng);
+        });
+
+        map.on('contextmenu', function(e) {
+            e.originalEvent.preventDefault();
+            if (currentMode === 'pathways') undoLastPathway();
+        });
+
+        // ── Pathway functions ─────────────────────────────────
+        function addPathwayPoint(lat, lng) {
+            rawPoints.push([lat, lng]);
+
+            const marker = L.circleMarker([lat, lng], {
+                radius: 6,
+                fillColor: '#00ff00',
+                color: '#fff',
+                weight: 2,
+                fillOpacity: 0.9
+            }).addTo(map);
+            marker.bindPopup(`Click #${rawPoints.length}`);
+            pathwayMarkers.push(marker);
+
+            rebuildPathwayPoints();
+            redrawPolyline();
+            updateDisplay();
+        }
+
+        function undoLastPathway() {
+            if (rawPoints.length === 0) return;
+            rawPoints.pop();
+            const lastMarker = pathwayMarkers.pop();
+            if (lastMarker) map.removeLayer(lastMarker);
+            rebuildPathwayPoints();
+            redrawPolyline();
+            updateDisplay();
+        }
+
+        function clearPathway() {
+            if (!confirm('Clear all pathway points?')) return;
+            rawPoints = [];
+            pathwayPoints = [];
+            pathwayMarkers.forEach(m => map.removeLayer(m));
+            pathwayMarkers = [];
+            interpMarkers.forEach(m => map.removeLayer(m));
+            interpMarkers = [];
+            if (pathwayPolyline) { map.removeLayer(pathwayPolyline); pathwayPolyline = null; }
+            updateDisplay();
+        }
+
+        function redrawPolyline() {
+            if (pathwayPolyline) map.removeLayer(pathwayPolyline);
+            if (pathwayPoints.length > 1) {
+                pathwayPolyline = L.polyline(pathwayPoints, {
+                    color: '#006341',
+                    weight: 4,
+                    opacity: 0.8
+                }).addTo(map);
+            }
+        }
+
+        async function savePathway() {
+            const pathwayId = document.getElementById('pathway-id').value;
+            const pathwayName = document.getElementById('pathway-name').value;
+            const pathwayType = document.getElementById('pathway-type').value;
+
+            if (!pathwayId || !pathwayName) {
+                showMessage('pathway-error', '❌ Please enter both Pathway ID and Name!');
+                return;
+            }
+            if (pathwayPoints.length < 2) {
+                showMessage('pathway-error', '❌ Please add at least 2 points!');
+                return;
+            }
+
+            const pathwayData = {
+                id: pathwayId,
+                name: pathwayName,
+                points: pathwayPoints,
+                type: pathwayType,
+                accessible: pathwayType === 'vehicle' || pathwayType === 'mixed',
+                surface: pathwayType === 'vehicle' ? 'asphalt' : 'concrete'
+            };
+
+            try {
+                const response = await fetch('/api/save-pathway', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify(pathwayData)
+                });
+                const result = await response.json();
+                if (response.ok) {
+                    showMessage('pathway-success', `✅ ${result.message} Refresh main page to use it!`);
+                    loadSavedPathways(); // show it on map immediately
+                    setTimeout(() => {
+                        if (confirm('Clear map for next pathway?')) {
+                            clearPathway();
+                            document.getElementById('pathway-id').value = '';
+                            document.getElementById('pathway-name').value = '';
+                        }
+                    }, 1000);
+                } else {
+                    showMessage('pathway-error', `❌ Error: ${result.error}`);
+                }
+            } catch (error) {
+                showMessage('pathway-error', `❌ Save failed: ${error.message}`);
+            }
+        }
+
+        function copyPathwayJSON() {
+            const json = document.getElementById('pathway-json-output').textContent;
+            navigator.clipboard.writeText(json).then(() => {
+                showMessage('pathway-success', '✅ JSON copied to clipboard!');
+            });
+        }
+
+        // ── Location functions ────────────────────────────────
+        function setLocationPoint(lat, lng) {
+            locationCoords = [lat, lng];
+            if (locationMarker) map.removeLayer(locationMarker);
+            locationMarker = L.marker([lat, lng], {
+                icon: L.divIcon({
+                    className: 'location-marker',
+                    html: '<div class="location-marker"></div>',
+                    iconSize: [20, 20],
+                    iconAnchor: [10, 10]
+                })
+            }).addTo(map);
+            updateDisplay();
+        }
+
+        function clearLocation() {
+            locationCoords = null;
+            if (locationMarker) { map.removeLayer(locationMarker); locationMarker = null; }
+            document.getElementById('location-id').value = '';
+            document.getElementById('location-name').value = '';
+            updateDisplay();
+        }
+
+        async function saveLocation() {
+            const locationId = document.getElementById('location-id').value;
+            const locationName = document.getElementById('location-name').value;
+            const locationType = document.getElementById('location-type').value;
+
+            if (!locationId || !locationName) {
+                showMessage('location-error', '❌ Please enter both Location ID and Name!');
+                return;
+            }
+            if (!locationCoords) {
+                showMessage('location-error', '❌ Please click on the map to place the location!');
+                return;
+            }
+
+            const locationData = { id: locationId, name: locationName, coordinates: locationCoords, type: locationType };
+
+            try {
+                const response = await fetch('/api/save-location', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify(locationData)
+                });
+                const result = await response.json();
+                if (response.ok) {
+                    showMessage('location-success', `✅ ${result.message} Refresh main page to see it!`);
+                    setTimeout(() => { if (confirm('Clear for next location?')) clearLocation(); }, 1000);
+                } else {
+                    showMessage('location-error', `❌ Error: ${result.error}`);
+                }
+            } catch (error) {
+                showMessage('location-error', `❌ Save failed: ${error.message}`);
+            }
+        }
+
+        function copyLocationJSON() {
+            const json = document.getElementById('location-json-output').textContent;
+            navigator.clipboard.writeText(json).then(() => {
+                showMessage('location-success', '✅ JSON copied to clipboard!');
+            });
+        }
+
+        // ── Display update ────────────────────────────────────
+        function updateDisplay() {
+            if (currentMode === 'pathways') updatePathwayDisplay();
+            else updateLocationDisplay();
+        }
+
+        function updatePathwayDisplay() {
+            const pointList = document.getElementById('pathway-point-list');
+            const total = pathwayPoints.length;
+            const raw = rawPoints.length;
+            const interp = total - raw;
+
+            if (raw === 0) {
+                pointList.innerHTML = 'No points yet. Click on the map to start!';
+            } else {
+                let summary = `<strong>${raw} clicks</strong> → <strong>${total} total points</strong>`;
+                if (isInterpolating() && interp > 0) {
+                    summary += ` <span style="opacity:0.7">(+${interp} auto-filled)</span>`;
+                }
+                pointList.innerHTML = summary + '<br>' +
+                    rawPoints.map((p, i) => `<span style="opacity:0.8">${i+1}. [${p[0].toFixed(6)}, ${p[1].toFixed(6)}]</span>`).join('  ');
+            }
+
+            const pathwayId = document.getElementById('pathway-id').value || 'new_pathway';
+            const pathwayName = document.getElementById('pathway-name').value || 'New Pathway';
+            const pathwayType = document.getElementById('pathway-type').value;
+
+            document.getElementById('pathway-json-output').textContent = JSON.stringify({
+                id: pathwayId,
+                name: pathwayName,
+                points: pathwayPoints,
+                type: pathwayType,
+                accessible: pathwayType === 'vehicle' || pathwayType === 'mixed',
+                surface: pathwayType === 'vehicle' ? 'asphalt' : 'concrete'
+            }, null, 2);
+        }
+
+        function updateLocationDisplay() {
+            const infoElem = document.getElementById('location-info');
+            if (!locationCoords) {
+                infoElem.innerHTML = 'Click on the map to place location marker';
+            } else {
+                infoElem.innerHTML = `<div class="point-item">📍 [${locationCoords[0].toFixed(6)}, ${locationCoords[1].toFixed(6)}]</div>`;
+            }
+            document.getElementById('location-json-output').textContent = JSON.stringify({
+                id: document.getElementById('location-id').value || 'new_location',
+                name: document.getElementById('location-name').value || 'New Location',
+                coordinates: locationCoords || [0, 0],
+                type: document.getElementById('location-type').value
+            }, null, 2);
+        }
+
+        function showMessage(elemId, message) {
+            const elem = document.getElementById(elemId);
+            elem.textContent = message;
+            elem.style.display = 'block';
+            setTimeout(() => { elem.style.display = 'none'; }, 5000);
+        }
+
+        // Event listeners
+        ['pathway-id','pathway-name'].forEach(id => document.getElementById(id).addEventListener('input', updateDisplay));
+        document.getElementById('pathway-type').addEventListener('change', updateDisplay);
+        ['location-id','location-name'].forEach(id => document.getElementById(id).addEventListener('input', updateDisplay));
+        document.getElementById('location-type').addEventListener('change', updateDisplay);
+
+        // ── Load & display saved pathways ────────────────────
+        const PATHWAY_COLORS = [
+            '#FF6B6B', '#FFD93D', '#6BCB77', '#4D96FF',
+            '#FF6FC8', '#FF9A3C', '#A855F7', '#06B6D4'
+        ];
+        let savedPathwayLayers = [];
+
+        function loadSavedPathways() {
+            fetch('/get-all-pathways')
+                .then(r => r.json())
+                .then(pathways => {
+                    // Remove old layers
+                    savedPathwayLayers.forEach(l => map.removeLayer(l));
+                    savedPathwayLayers = [];
+
+                    pathways.forEach((pathway, idx) => {
+                        if (!pathway.points || pathway.points.length < 2) return;
+
+                        const color = PATHWAY_COLORS[idx % PATHWAY_COLORS.length];
+
+                        const line = L.polyline(pathway.points, {
+                            color: color,
+                            weight: 5,
+                            opacity: 0.45,
+                            lineCap: 'round',
+                            lineJoin: 'round'
+                        }).addTo(map);
+
+                        // Tooltip showing name
+                        line.bindTooltip(`<strong>${pathway.name}</strong><br><span style="font-size:11px;opacity:0.8">${pathway.points.length} points • ${pathway.type}</span>`, {
+                            sticky: true,
+                            opacity: 0.95
+                        });
+
+                        // Hover: brighten
+                        line.on('mouseover', function() {
+                            this.setStyle({ opacity: 1, weight: 7 });
+                        });
+                        line.on('mouseout', function() {
+                            this.setStyle({ opacity: 0.45, weight: 5 });
+                        });
+
+                        savedPathwayLayers.push(line);
+                    });
+
+                    console.log(`✅ Loaded ${pathways.length} saved pathways on map`);
+                })
+                .catch(e => console.log('Could not load saved pathways:', e));
+        }
+
+        // Load on start
+        loadSavedPathways();
+
+        // Load existing buildings for reference
+        fetch('/get-all-locations')
+            .then(r => r.json())
+            .then(locations => {
+                locations.forEach(loc => {
+                    if (loc.coordinates) {
+                        L.marker(loc.coordinates, {
+                            icon: L.divIcon({
+                                className: 'building-marker',
+                                html: `<div style="background:#006341;color:white;padding:4px 8px;border-radius:4px;font-size:10px;font-weight:bold;white-space:nowrap;pointer-events:none;">${loc.id}</div>`,
+                                iconSize: [60, 20],
+                                iconAnchor: [30, 10]
+                            }),
+                            interactive: false
+                        }).addTo(map).bindPopup(loc.name || loc.id);
+                    }
+                });
+            })
+            .catch(e => console.log('Could not load buildings'));
+    </script>
+</body>
+</html>
