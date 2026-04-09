@@ -12,14 +12,9 @@ import json
 import base64
 from io import BytesIO
 from PIL import Image
-import torch
 from dotenv import load_dotenv
 from mysql.connector import pooling
 import mysql.connector
-
-# ML Detection imports
-from inference import get_model
-import cv2
 
 # Load environment variables
 load_dotenv()
@@ -68,13 +63,7 @@ ROBOFLOW_API_KEY = os.getenv('ROBOFLOW_API_KEY', 'a7egLGQSh1aNH2WQs2xC')
 os.environ['ROBOFLOW_API_KEY'] = ROBOFLOW_API_KEY
 MODEL_ID = "lakan-okc8g/7"
 
-print("🔄 Loading Roboflow building detection model...")
-try:
-    detection_model = get_model(model_id=MODEL_ID)
-    print("✅ Roboflow building detection model loaded!")
-except Exception as e:
-    print(f"❌ Error loading Roboflow model: {e}")
-    detection_model = None
+print("✅ Roboflow HTTP API ready")
 
 # Import your modules
 try:
@@ -258,6 +247,54 @@ def pathway_collector():
 
 @app.route('/detect-building', methods=['POST'])
 def detect_building():
+    print("📸 /detect-building endpoint called")
+
+    if 'image' not in request.files:
+        return jsonify({'success': False, 'error': 'No image provided'})
+
+    file = request.files['image']
+    if file.filename == '' or not allowed_image_file(file.filename):
+        return jsonify({'success': False, 'error': 'Invalid file'})
+
+    try:
+        # Convert image to base64
+        image_data = file.read()
+        image_b64 = base64.b64encode(image_data).decode('utf-8')
+
+        # Call Roboflow HTTP API
+        response = requests.post(
+            f"https://detect.roboflow.com/{MODEL_ID}",
+            params={"api_key": ROBOFLOW_API_KEY},
+            data=image_b64,
+            headers={"Content-Type": "application/x-www-form-urlencoded"}
+        )
+
+        if response.status_code != 200:
+            return jsonify({'success': False, 'error': f'Roboflow API error: {response.status_code}'})
+
+        result = response.json()
+        predictions = result.get('predictions', [])
+
+        detection_list = [
+            {
+                'class_name': pred.get('class', 'Unknown'),
+                'confidence': float(pred.get('confidence', 0))
+            }
+            for pred in predictions
+        ]
+
+        print(f"✅ Detected {len(detection_list)} buildings")
+        return jsonify({
+            'success': True,
+            'detections': detection_list,
+            'count': len(detection_list),
+            'message': 'No buildings detected' if not detection_list else ''
+        })
+
+    except Exception as e:
+        print(f"❌ Detection error: {e}")
+        return jsonify({'success': False, 'error': str(e)})
+    
     """
     Building detection endpoint for camera feature
     Uses Roboflow ML model to identify buildings from photos
