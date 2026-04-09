@@ -74,6 +74,8 @@
         }
         .how-box p{margin:0 0 8px;font-weight:700;color:#006341;font-size:12px;text-transform:uppercase;letter-spacing:.5px}
         .how-box div{font-size:13px;color:#374151;line-height:1.9}
+        /* Admin upload button - hidden by default */
+        #uploadMemoBtn { display: none; }
     </style>
 </head>
 <body>
@@ -89,9 +91,15 @@
             <button class="nav-icon" id="cameraBtn" title="Identify Building">
                 <i class="fas fa-camera"></i>
             </button>
-            <button class="nav-icon" id="adminBtn" title="Admin Mode">
+            <!-- Admin crosshairs - hidden until admin logs in -->
+            <button class="nav-icon" id="adminBtn" title="Admin GPS Mode" style="display:none">
                 <i class="fas fa-crosshairs"></i>
             </button>
+            <!-- Admin memo upload - hidden until admin logs in -->
+            <button class="nav-icon" id="uploadMemoBtn" title="Upload Memo" onclick="window.location.href='/admin'">
+                <i class="fas fa-file-upload"></i>
+            </button>
+            <!-- Gear = admin login (always visible) -->
             <button class="nav-icon" id="settingsBtn" title="Admin Login" onclick="openAdminLogin()">
                 <i class="fas fa-cog"></i>
             </button>
@@ -218,11 +226,10 @@
             <input type="password" id="loginPassword" class="modal-input" placeholder="Password"
                 onkeypress="if(event.key==='Enter') submitLogin()">
 
-            <div class="modal-err" id="loginError">Invalid email or password.</div>
-
+            <div class="modal-err" id="loginError"></div>
             <button onclick="submitLogin()" class="modal-btn">Login</button>
             <span class="modal-link" onclick="openSignup()">Don't have an account? Sign up</span>
-            <span class="modal-link" onclick="closeAdminLogin()" style="color:#9ca3af;font-size:12px">✕ Cancel</span>
+            <span class="modal-link" onclick="closeAdminLogin()" style="color:#9ca3af;font-size:12px;text-decoration:none">✕ Cancel</span>
         </div>
     </div>
 
@@ -290,7 +297,11 @@
         return inside;
     }
 
+    // Global state
     let userGPSLocation = null;
+    let userInsideCampus = false; // false = unknown/outside, true = inside
+    let gpsChecked = false;
+    let isAdminLoggedIn = false;
 
     function enableGPS() {
         const dot = document.getElementById('gpsDot');
@@ -310,17 +321,19 @@
         navigator.geolocation.getCurrentPosition(pos => {
             const {latitude: lat, longitude: lng} = pos.coords;
             userGPSLocation = {lat, lng};
-            const inside = isInsideCampus(lat, lng);
-            dot.className = inside ? 'gps-dot inside' : 'gps-dot outside';
-            text.textContent = inside
+            gpsChecked = true;
+            userInsideCampus = isInsideCampus(lat, lng);
+            dot.className = userInsideCampus ? 'gps-dot inside' : 'gps-dot outside';
+            text.textContent = userInsideCampus
                 ? '✅ You are inside DLSU-D campus!'
-                : '⚠️ You are outside campus. Navigation starts from Gate 1.';
+                : '⚠️ You are outside campus. Navigation is only available on-site.';
             btn.textContent = '📍 GPS Enabled';
             btn.style.opacity = '0.6';
         }, () => {
             dot.className = 'gps-dot outside';
             text.textContent = 'Could not get location. Please allow GPS access.';
             btn.disabled = false;
+            gpsChecked = false;
         }, {enableHighAccuracy:true, timeout:10000});
     }
 
@@ -337,7 +350,8 @@
                         ? `Welcome, ${name}! 👋 I'm Lakán. Ask me "How do I get to JFH?" or tap any building.`
                         : `Hi! I'm Lakán. Ask me "How do I get to JFH?" or tap any building on the map.`;
                     window.mobileApp.addMessage('bot', msg);
-                    if (userGPSLocation && window.adminMode) {
+                    // Set GPS location for navigation if inside campus
+                    if (userGPSLocation && userInsideCampus && window.adminMode) {
                         window.adminMode.customLocation = userGPSLocation;
                         window.adminMode.enabled = true;
                     }
@@ -346,6 +360,31 @@
             greet();
         }, 300);
     }
+
+    // ===== GEOFENCE ENFORCEMENT =====
+    // Override showNavigation to block outside users
+    window._originalShowNavigation = null;
+    document.addEventListener('DOMContentLoaded', () => {
+        // Wait for mobileApp to be ready then wrap showNavigation
+        const waitForApp = setInterval(() => {
+            if (window.mobileApp) {
+                clearInterval(waitForApp);
+                const originalShow = window.mobileApp.showNavigation || window.showNavigation;
+                // Patch the global showNavigation
+                const orig = window.showNavigation;
+                if (orig) {
+                    window.showNavigation = function(start, destination) {
+                        if (gpsChecked && !userInsideCampus && !isAdminLoggedIn) {
+                            window.mobileApp.addMessage('bot',
+                                '🚫 You must be inside the DLSU-D campus to use navigation.');
+                            return;
+                        }
+                        orig(start, destination);
+                    };
+                }
+            }
+        }, 200);
+    });
 
     // ===== ADMIN LOGIN =====
     function openAdminLogin() {
@@ -377,10 +416,18 @@
             });
             const data = await res.json();
             if (data.success) {
+                isAdminLoggedIn = true;
                 closeAdminLogin();
-                document.getElementById('adminBtn').click();
+                // Show admin-only buttons
+                document.getElementById('adminBtn').style.display = 'flex';
+                document.getElementById('uploadMemoBtn').style.display = 'flex';
+                // Change gear icon to logout
+                document.getElementById('settingsBtn').innerHTML = '<i class="fas fa-sign-out-alt"></i>';
+                document.getElementById('settingsBtn').title = 'Logout';
+                document.getElementById('settingsBtn').onclick = adminLogout;
+
                 if (window.mobileApp)
-                    window.mobileApp.addMessage('bot', `✅ Welcome, Admin ${data.name||''}! Admin mode activated.`);
+                    window.mobileApp.addMessage('bot', `✅ Welcome, Admin ${data.name||''}! Admin tools are now visible.`);
             } else {
                 err.textContent = data.error || 'Invalid email or password.';
                 err.style.display = 'block';
@@ -391,6 +438,18 @@
         }
     }
 
+    function adminLogout() {
+        isAdminLoggedIn = false;
+        document.getElementById('adminBtn').style.display = 'none';
+        document.getElementById('uploadMemoBtn').style.display = 'none';
+        document.getElementById('settingsBtn').innerHTML = '<i class="fas fa-cog"></i>';
+        document.getElementById('settingsBtn').title = 'Admin Login';
+        document.getElementById('settingsBtn').onclick = openAdminLogin;
+        if (window.mobileApp)
+            window.mobileApp.addMessage('bot', 'Admin logged out.');
+    }
+
+    // ===== SIGNUP =====
     function openSignup() {
         document.getElementById('adminLoginModal').style.display = 'none';
         document.getElementById('adminSignupModal').style.display = 'flex';
@@ -415,7 +474,6 @@
         }
 
         try {
-            // EmailJS - replace with your actual keys from emailjs.com
             emailjs.init('YOUR_EMAILJS_PUBLIC_KEY');
             await emailjs.send('YOUR_SERVICE_ID', 'YOUR_TEMPLATE_ID', {
                 to_email: 'lakandlsud@gmail.com',
