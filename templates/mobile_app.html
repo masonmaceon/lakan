@@ -338,6 +338,13 @@
     }
 
     function startApp() {
+        if (!gpsChecked) {
+            document.getElementById('gpsText').textContent = '⚠️ Please enable GPS first before navigating.';
+            document.getElementById('gpsDot').className = 'gps-dot outside';
+            document.getElementById('gpsBtn').style.border = '2px solid #dc2626';
+            return;
+        }
+
         const name = (document.getElementById('welcomeNameInput').value||'').trim();
         const modal = document.getElementById('welcomeModal');
         modal.style.transition = 'opacity 0.3s';
@@ -350,7 +357,6 @@
                         ? `Welcome, ${name}! 👋 I'm Lakán. Ask me "How do I get to JFH?" or tap any building.`
                         : `Hi! I'm Lakán. Ask me "How do I get to JFH?" or tap any building on the map.`;
                     window.mobileApp.addMessage('bot', msg);
-                    // Set GPS location for navigation if inside campus
                     if (userGPSLocation && userInsideCampus && window.adminMode) {
                         window.adminMode.customLocation = userGPSLocation;
                         window.adminMode.enabled = true;
