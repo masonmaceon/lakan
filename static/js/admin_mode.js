@@ -29,7 +29,7 @@ function initAdminMode() {
         font-size: 20px;
         cursor: pointer;
         box-shadow: 0 4px 6px rgba(0,0,0,0.3);
-        display: flex;
+        display: none;
         align-items: center;
         justify-content: center;
     `;
@@ -255,3 +255,14 @@ if (document.readyState === 'loading') {
 window.adminMode = adminMode;
 window.getStartLocation = getStartLocation;
 window.isInsideCampusGeofence = isInsideCampusGeofence;
+
+// Call this after admin login to reveal the button
+window.showAdminModeButton = function() {
+    const btn = document.getElementById('admin-mode-btn');
+    if (btn) btn.style.display = 'flex';
+};
+
+window.hideAdminModeButton = function() {
+    const btn = document.getElementById('admin-mode-btn');
+    if (btn) btn.style.display = 'none';
+};
