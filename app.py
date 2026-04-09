@@ -609,6 +609,15 @@ def admin_login():
         admin = cursor.fetchone()
         print(f"🔍 Login: email={email} password={password} result={admin}")
         conn.close()
+        cursor.execute("SELECT DATABASE()")
+        db_name = cursor.fetchone()
+        print(f"🔍 Connected to database: {db_name}")
+        cursor.execute("SELECT COUNT(*) as cnt FROM admins")
+        count = cursor.fetchone()
+        print(f"🔍 Admins count: {count}")
+        cursor.execute("SELECT * FROM admins WHERE email = %s AND password = %s", (email, password))
+        admin = cursor.fetchone()
+        print(f"🔍 Login result: {admin}")
         if admin:
             return jsonify({'success': True, 'name': admin.get('name', '')})
         else:
