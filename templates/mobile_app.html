@@ -92,8 +92,7 @@
                 <i class="fas fa-camera"></i>
             </button>
             <!-- Admin crosshairs - hidden until admin logs in -->
-            <button class="nav-icon" id="recenterBtn" title="Recenter Map" onclick="recenterMap()">
-                <i class="fas fa-crosshairs"></i>
+            <button class="nav-icon" id="recenterBtn" title="Recenter Map" onclick="if(window.recenterMap) window.recenterMap()">                <i class="fas fa-crosshairs"></i>
             </button>
             <!-- Admin memo upload - hidden until admin logs in -->
             <button class="nav-icon" id="uploadMemoBtn" title="Upload Memo" onclick="window.location.href='/admin'">
@@ -492,7 +491,7 @@
             err.textContent = 'Failed to send request. Please try again.';
             err.style.display = 'block';
         }
-                function recenterMap() {
+            window.recenterMap = function() {
             if (!window.map) return;
             
             // If there's an active route, fit to it
