@@ -595,6 +595,24 @@ def serve_static(filename):
     """Serve static files"""
     return send_from_directory('static', filename)
 
+@app.route('/api/admin/login', methods=['POST'])
+def admin_login():
+    try:
+        data = request.get_json()
+        email = data.get('email', '')
+        password = data.get('password', '')
+        conn = get_db_connection()
+        cursor = conn.cursor(dictionary=True)
+        cursor.execute("SELECT * FROM admins WHERE email = %s AND password = %s", (email, password))
+        admin = cursor.fetchone()
+        conn.close()
+        if admin:
+            return jsonify({'success': True, 'name': admin.get('name', '')})
+        else:
+            return jsonify({'success': False, 'error': 'Invalid email or password.'})
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)})
+
 # ==================== START SERVER ====================
 
 if __name__ == '__main__':

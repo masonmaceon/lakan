@@ -7,17 +7,77 @@
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <link rel="stylesheet" href="{{ url_for('static', filename='css/mobile_app.css') }}">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
     <style>
-        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        @keyframes fadeIn { from{opacity:0} to{opacity:1} }
         @keyframes slideUp {
-            from { opacity: 0; transform: translateY(24px) scale(0.96); }
-            to   { opacity: 1; transform: translateY(0)    scale(1);    }
+            from{opacity:0;transform:translateY(24px) scale(0.96)}
+            to{opacity:1;transform:translateY(0) scale(1)}
         }
+        .modal-overlay {
+            position:fixed; inset:0;
+            background:rgba(0,0,0,0.55);
+            backdrop-filter:blur(6px);
+            z-index:99999;
+            display:flex; align-items:center; justify-content:center;
+            padding:24px;
+            animation:fadeIn 0.35s ease;
+            font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
+        }
+        .modal-box {
+            background:white; border-radius:24px; padding:36px 28px;
+            max-width:380px; width:100%; text-align:center;
+            box-shadow:0 24px 64px rgba(0,0,0,0.25);
+            animation:slideUp 0.4s cubic-bezier(0.4,0,0.2,1);
+        }
+        .modal-box h1{color:#006341;font-size:28px;font-weight:800;margin:0 0 4px}
+        .modal-box .subtitle{color:#6b7280;font-size:12px;margin:0 0 20px;letter-spacing:1px;text-transform:uppercase}
+        .modal-input{
+            width:100%;padding:12px 14px;
+            border:2px solid #e5e7eb;border-radius:10px;
+            font-size:15px;outline:none;
+            box-sizing:border-box;font-family:inherit;
+            transition:border-color 0.2s;margin-bottom:12px;display:block;
+        }
+        .modal-input:focus{border-color:#006341}
+        .modal-btn{
+            width:100%;padding:14px;
+            background:linear-gradient(135deg,#006341,#004d32);
+            color:white;border:none;border-radius:12px;
+            font-size:16px;font-weight:700;cursor:pointer;
+            font-family:inherit;transition:transform 0.15s;margin-top:4px;display:block;
+        }
+        .modal-btn:active{transform:scale(0.98)}
+        .modal-btn.outline{
+            background:white;color:#006341;
+            border:2px solid #006341;margin-top:8px;
+        }
+        .modal-link{
+            color:#006341;font-size:13px;cursor:pointer;
+            text-decoration:underline;margin-top:12px;display:block;
+        }
+        .modal-err{color:#dc2626;font-size:13px;margin:8px 0;display:none}
+        .modal-ok{color:#16a34a;font-size:13px;margin:8px 0;display:none}
+        .gps-bar{
+            display:flex;align-items:center;gap:10px;
+            background:#f0faf5;border-radius:10px;padding:12px 14px;
+            margin-bottom:16px;font-size:13px;color:#374151;text-align:left;
+        }
+        .gps-dot{width:10px;height:10px;border-radius:50%;background:#9ca3af;flex-shrink:0}
+        .gps-dot.inside{background:#16a34a}
+        .gps-dot.outside{background:#dc2626}
+        .gps-dot.searching{background:#f59e0b;animation:blink 1s infinite}
+        @keyframes blink{0%,100%{opacity:1}50%{opacity:0.3}}
+        .how-box{
+            background:#f0faf5;border-radius:12px;padding:14px 16px;
+            margin-bottom:20px;text-align:left;
+        }
+        .how-box p{margin:0 0 8px;font-weight:700;color:#006341;font-size:12px;text-transform:uppercase;letter-spacing:.5px}
+        .how-box div{font-size:13px;color:#374151;line-height:1.9}
     </style>
 </head>
 <body>
 
-    <!-- Top Navigation Bar -->
     <div class="top-nav">
         <div class="nav-left">
             <div class="logo">
@@ -32,16 +92,14 @@
             <button class="nav-icon" id="adminBtn" title="Admin Mode">
                 <i class="fas fa-crosshairs"></i>
             </button>
-            <button class="nav-icon" id="settingsBtn" title="Settings">
+            <button class="nav-icon" id="settingsBtn" title="Admin Login" onclick="openAdminLogin()">
                 <i class="fas fa-cog"></i>
             </button>
         </div>
     </div>
 
-    <!-- Map Container -->
     <div id="map"></div>
 
-    <!-- Chatbot Interface -->
     <div class="chatbot-container" id="chatbotContainer">
         <div class="chatbot-header">
             <div class="chatbot-title">
@@ -72,15 +130,15 @@
                     <p>Tap to take photo or upload image</p>
                     <input type="file" id="buildingImage" accept="image/*" capture="environment">
                 </div>
-                <div class="camera-preview" id="previewArea" style="display: none;">
+                <div class="camera-preview" id="previewArea" style="display:none">
                     <img id="previewImage" src="" alt="Preview">
                     <button class="btn-primary" id="identifyBtn"><i class="fas fa-search"></i> Identify Building</button>
                 </div>
-                <div class="camera-loading" id="cameraLoading" style="display: none;">
+                <div class="camera-loading" id="cameraLoading" style="display:none">
                     <div class="spinner"></div>
                     <p>Identifying building...</p>
                 </div>
-                <div class="camera-result" id="cameraResult" style="display: none;">
+                <div class="camera-result" id="cameraResult" style="display:none">
                     <div class="result-icon"><i class="fas fa-building"></i></div>
                     <h2 id="buildingName"></h2>
                     <p class="confidence" id="confidence"></p>
@@ -91,8 +149,8 @@
         </div>
     </div>
 
-    <!-- Admin Mode Panel -->
-    <div class="admin-panel" id="adminPanel" style="display: none;">
+    <!-- Admin crosshairs panel -->
+    <div class="admin-panel" id="adminPanel" style="display:none">
         <div class="admin-header">
             <span><i class="fas fa-crosshairs"></i> Admin Mode</span>
             <button id="closeAdminBtn"><i class="fas fa-times"></i></button>
@@ -109,39 +167,21 @@
         </div>
     </div>
 
-    <!-- Loading Overlay (hidden by default) -->
-    <div class="loading-overlay" id="loadingOverlay" style="display: none;">
+    <div class="loading-overlay" id="loadingOverlay" style="display:none">
         <div class="spinner-large"></div>
         <p>Loading navigation system...</p>
     </div>
 
-    <!-- Welcome Modal -->
-    <div id="welcomeModal" style="
-        position: fixed; inset: 0;
-        background: rgba(0,0,0,0.55);
-        backdrop-filter: blur(6px);
-        z-index: 99999;
-        display: flex; align-items: center; justify-content: center;
-        padding: 24px;
-        animation: fadeIn 0.35s ease;
-        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-    ">
-        <div style="
-            background: white;
-            border-radius: 24px;
-            padding: 36px 28px;
-            max-width: 380px; width: 100%;
-            text-align: center;
-            box-shadow: 0 24px 64px rgba(0,0,0,0.25);
-            animation: slideUp 0.4s cubic-bezier(0.4,0,0.2,1);
-        ">
-            <div style="font-size: 52px; margin-bottom: 8px;">🗺️</div>
-            <h1 style="color:#006341; font-size:30px; font-weight:800; margin:0 0 4px;">Lakán</h1>
-            <p style="color:#6b7280; font-size:12px; margin:0 0 20px; letter-spacing:1px; text-transform:uppercase;">DLSU-Dasmariñas Campus Navigator</p>
+    <!-- ===== WELCOME MODAL ===== -->
+    <div id="welcomeModal" class="modal-overlay">
+        <div class="modal-box">
+            <div style="font-size:52px;margin-bottom:8px">🗺️</div>
+            <h1>Lakán</h1>
+            <p class="subtitle">DLSU-Dasmariñas Campus Navigator</p>
 
-            <div style="background:#f0faf5; border-radius:12px; padding:14px 16px; margin-bottom:20px; text-align:left;">
-                <p style="margin:0 0 8px; font-weight:700; color:#006341; font-size:12px; text-transform:uppercase; letter-spacing:0.5px;">How to use</p>
-                <div style="font-size:13px; color:#374151; line-height:1.9;">
+            <div class="how-box">
+                <p>How to use</p>
+                <div>
                     💬 Ask <strong>"How do I get to JFH?"</strong><br>
                     🏛️ Tap any building on the map<br>
                     📍 Enable GPS for live navigation<br>
@@ -149,74 +189,252 @@
                 </div>
             </div>
 
-            <div style="margin-bottom:16px; text-align:left;">
-                <label style="font-size:13px; font-weight:600; color:#374151; display:block; margin-bottom:6px;">Your name</label>
-                <input
-                    id="welcomeNameInput"
-                    type="text"
-                    placeholder="e.g. Juan dela Cruz"
-                    style="
-                        width:100%; padding:12px 14px;
-                        border:2px solid #e5e7eb; border-radius:10px;
-                        font-size:15px; outline:none;
-                        box-sizing:border-box;
-                        font-family:inherit;
-                        transition: border-color 0.2s;
-                    "
-                    onfocus="this.style.borderColor='#006341'"
-                    onblur="this.style.borderColor='#e5e7eb'"
-                    onkeypress="if(event.key==='Enter') startApp()"
-                >
+            <div class="gps-bar">
+                <div class="gps-dot searching" id="gpsDot"></div>
+                <span id="gpsText">Tap "Enable GPS" to detect your location</span>
             </div>
 
-            <button
-                onclick="startApp()"
-                style="
-                    width:100%; padding:14px;
-                    background:linear-gradient(135deg,#006341,#004d32);
-                    color:white; border:none; border-radius:12px;
-                    font-size:16px; font-weight:700; cursor:pointer;
-                    font-family:inherit;
-                    transition: transform 0.15s;
-                "
-                onmousedown="this.style.transform='scale(0.98)'"
-                onmouseup="this.style.transform='scale(1)'"
-                ontouchstart="this.style.transform='scale(0.98)'"
-                ontouchend="this.style.transform='scale(1)'"
-            >Start Navigating →</button>
+            <div style="margin-bottom:16px;text-align:left">
+                <label style="font-size:13px;font-weight:600;color:#374151;display:block;margin-bottom:6px">Your name</label>
+                <input id="welcomeNameInput" type="text" placeholder="e.g. Juan dela Cruz" class="modal-input"
+                    onkeypress="if(event.key==='Enter') startApp()" style="margin-bottom:0">
+            </div>
 
-            <p style="font-size:11px; color:#9ca3af; margin:14px 0 0;">Animo La Salle! 💚</p>
+            <button onclick="enableGPS()" class="modal-btn outline" id="gpsBtn">📍 Enable GPS</button>
+            <button onclick="startApp()" class="modal-btn" style="margin-top:10px">Start Navigating →</button>
+            <p style="font-size:11px;color:#9ca3af;margin:14px 0 0">Animo La Salle! 💚</p>
+        </div>
+    </div>
+
+    <!-- ===== ADMIN LOGIN MODAL ===== -->
+    <div id="adminLoginModal" class="modal-overlay" style="display:none">
+        <div class="modal-box">
+            <div style="font-size:40px;margin-bottom:8px">🔐</div>
+            <h1>Admin Login</h1>
+            <p class="subtitle">Lakán Admin Portal</p>
+
+            <input type="email" id="loginEmail" class="modal-input" placeholder="Email address"
+                onkeypress="if(event.key==='Enter') submitLogin()">
+            <input type="password" id="loginPassword" class="modal-input" placeholder="Password"
+                onkeypress="if(event.key==='Enter') submitLogin()">
+
+            <div class="modal-err" id="loginError">Invalid email or password.</div>
+
+            <button onclick="submitLogin()" class="modal-btn">Login</button>
+            <span class="modal-link" onclick="openSignup()">Don't have an account? Sign up</span>
+            <span class="modal-link" onclick="closeAdminLogin()" style="color:#9ca3af;font-size:12px">✕ Cancel</span>
+        </div>
+    </div>
+
+    <!-- ===== ADMIN SIGNUP MODAL ===== -->
+    <div id="adminSignupModal" class="modal-overlay" style="display:none">
+        <div class="modal-box">
+            <div style="font-size:40px;margin-bottom:8px">📝</div>
+            <h1>Request Access</h1>
+            <p class="subtitle">Admin Account Request</p>
+
+            <p style="font-size:13px;color:#6b7280;margin-bottom:16px;text-align:left">
+                Enter your email. An access request will be sent to the Lakán administrator for approval.
+            </p>
+
+            <input type="email" id="signupEmail" class="modal-input" placeholder="Your email address"
+                onkeypress="if(event.key==='Enter') submitSignup()">
+
+            <div class="modal-err" id="signupError"></div>
+            <div class="modal-ok" id="signupSuccess">✅ Request sent! The admin will contact you shortly.</div>
+
+            <button onclick="submitSignup()" class="modal-btn">Send Request</button>
+            <span class="modal-link" onclick="backToLogin()">← Back to Login</span>
         </div>
     </div>
 
     <script>
-        function startApp() {
-            const name = (document.getElementById('welcomeNameInput').value || '').trim();
-            const modal = document.getElementById('welcomeModal');
-            modal.style.transition = 'opacity 0.3s';
-            modal.style.opacity = '0';
-            setTimeout(() => {
-                modal.remove();
-                // Wait for mobileApp to be ready then send greeting
-                const greet = () => {
-                    if (window.mobileApp) {
-                        const msg = name
-                            ? `Welcome, ${name}! 👋 I'm Lakán, your campus guide. Ask me "How do I get to JFH?" or tap any building on the map.`
-                            : `Hi! I'm Lakán. Ask me "How do I get to JFH?" or tap any building on the map.`;
-                        window.mobileApp.addMessage('bot', msg);
-                    } else {
-                        setTimeout(greet, 100);
-                    }
-                };
-                greet();
-            }, 300);
+    // ===== CAMPUS GEOFENCE =====
+    const CAMPUS_POLYGON = [
+        [14.32818662510567,120.9567975958491],[14.32752027108145,120.9567963398511],
+        [14.32768682559514,120.9564808631922],[14.32743336195957,120.9563213849764],
+        [14.32672062496383,120.9565586419667],[14.32656929289275,120.9562289860432],
+        [14.32600900699904,120.9564279336344],[14.3261773960092,120.9570281215504],
+        [14.32519266735426,120.9574789041855],[14.32395197971977,120.9580315661473],
+        [14.32349104329306,120.958063699499],[14.32310766881952,120.9579286375001],
+        [14.32241761489955,120.9582635979482],[14.32222120947024,120.9590161434638],
+        [14.32188034334736,120.9593112488646],[14.32143364999976,120.9596513468901],
+        [14.32092263872406,120.9589530973515],[14.32057047048283,120.9590808781895],
+        [14.32075858830808,120.9599259018387],[14.32073693239591,120.9609000096161],
+        [14.32076541121095,120.9611769641984],[14.32035374877684,120.9615029063688],
+        [14.32036763858504,120.9623031000242],[14.32017497239015,120.9624370551645],
+        [14.3202310757531,120.9637871515548],[14.32167166965975,120.9636030929361],
+        [14.32257304382801,120.96340148091],[14.3224211828718,120.9618762994643],
+        [14.32251613647768,120.961639643329],[14.32284557393603,120.9612595305099],
+        [14.32278662130614,120.9607381027064],[14.32240455164923,120.9600426870383],
+        [14.32233881437341,120.9598603790604],[14.32359148933513,120.9594433417126],
+        [14.32350154949827,120.959077563018],[14.32423172398813,120.958915603129],
+        [14.32457176998089,120.959144665848],[14.32503223320452,120.9590570612722],
+        [14.32519130136358,120.9593736678777],[14.32545841296897,120.9592491755199],
+        [14.32568030275208,120.9597074662772],[14.32647707342846,120.9591047501309],
+        [14.32623955694121,120.9584696810097],[14.32697612393637,120.9581215349532],
+        [14.3273087242948,120.9577273069426],[14.32761986892539,120.9573771415603],
+        [14.3275871025824,120.9570439114976],[14.32799553998608,120.9570339507299],
+        [14.32826793715991,120.9570731271131]
+    ];
+
+    function isInsideCampus(lat, lng) {
+        let inside = false;
+        const n = CAMPUS_POLYGON.length;
+        for (let i = 0, j = n-1; i < n; j = i++) {
+            const xi = CAMPUS_POLYGON[i][1], yi = CAMPUS_POLYGON[i][0];
+            const xj = CAMPUS_POLYGON[j][1], yj = CAMPUS_POLYGON[j][0];
+            if (((yi > lat) !== (yj > lat)) && (lng < (xj-xi)*(lat-yi)/(yj-yi)+xi))
+                inside = !inside;
         }
+        return inside;
+    }
+
+    let userGPSLocation = null;
+
+    function enableGPS() {
+        const dot = document.getElementById('gpsDot');
+        const text = document.getElementById('gpsText');
+        const btn = document.getElementById('gpsBtn');
+        dot.className = 'gps-dot searching';
+        text.textContent = 'Detecting your location...';
+        btn.disabled = true;
+
+        if (!navigator.geolocation) {
+            dot.className = 'gps-dot outside';
+            text.textContent = 'GPS not supported on this device.';
+            btn.disabled = false;
+            return;
+        }
+
+        navigator.geolocation.getCurrentPosition(pos => {
+            const {latitude: lat, longitude: lng} = pos.coords;
+            userGPSLocation = {lat, lng};
+            const inside = isInsideCampus(lat, lng);
+            dot.className = inside ? 'gps-dot inside' : 'gps-dot outside';
+            text.textContent = inside
+                ? '✅ You are inside DLSU-D campus!'
+                : '⚠️ You are outside campus. Navigation starts from Gate 1.';
+            btn.textContent = '📍 GPS Enabled';
+            btn.style.opacity = '0.6';
+        }, () => {
+            dot.className = 'gps-dot outside';
+            text.textContent = 'Could not get location. Please allow GPS access.';
+            btn.disabled = false;
+        }, {enableHighAccuracy:true, timeout:10000});
+    }
+
+    function startApp() {
+        const name = (document.getElementById('welcomeNameInput').value||'').trim();
+        const modal = document.getElementById('welcomeModal');
+        modal.style.transition = 'opacity 0.3s';
+        modal.style.opacity = '0';
+        setTimeout(() => {
+            modal.remove();
+            const greet = () => {
+                if (window.mobileApp) {
+                    const msg = name
+                        ? `Welcome, ${name}! 👋 I'm Lakán. Ask me "How do I get to JFH?" or tap any building.`
+                        : `Hi! I'm Lakán. Ask me "How do I get to JFH?" or tap any building on the map.`;
+                    window.mobileApp.addMessage('bot', msg);
+                    if (userGPSLocation && window.adminMode) {
+                        window.adminMode.customLocation = userGPSLocation;
+                        window.adminMode.enabled = true;
+                    }
+                } else setTimeout(greet, 100);
+            };
+            greet();
+        }, 300);
+    }
+
+    // ===== ADMIN LOGIN =====
+    function openAdminLogin() {
+        document.getElementById('adminLoginModal').style.display = 'flex';
+        document.getElementById('loginError').style.display = 'none';
+        document.getElementById('loginEmail').value = '';
+        document.getElementById('loginPassword').value = '';
+    }
+
+    function closeAdminLogin() {
+        document.getElementById('adminLoginModal').style.display = 'none';
+    }
+
+    async function submitLogin() {
+        const email = document.getElementById('loginEmail').value.trim();
+        const password = document.getElementById('loginPassword').value;
+        const err = document.getElementById('loginError');
+
+        if (!email || !password) {
+            err.textContent = 'Please fill in all fields.';
+            err.style.display = 'block'; return;
+        }
+
+        try {
+            const res = await fetch('/api/admin/login', {
+                method:'POST',
+                headers:{'Content-Type':'application/json'},
+                body:JSON.stringify({email, password})
+            });
+            const data = await res.json();
+            if (data.success) {
+                closeAdminLogin();
+                document.getElementById('adminBtn').click();
+                if (window.mobileApp)
+                    window.mobileApp.addMessage('bot', `✅ Welcome, Admin ${data.name||''}! Admin mode activated.`);
+            } else {
+                err.textContent = data.error || 'Invalid email or password.';
+                err.style.display = 'block';
+            }
+        } catch(e) {
+            err.textContent = 'Connection error. Please try again.';
+            err.style.display = 'block';
+        }
+    }
+
+    function openSignup() {
+        document.getElementById('adminLoginModal').style.display = 'none';
+        document.getElementById('adminSignupModal').style.display = 'flex';
+        document.getElementById('signupError').style.display = 'none';
+        document.getElementById('signupSuccess').style.display = 'none';
+        document.getElementById('signupEmail').value = '';
+    }
+
+    function backToLogin() {
+        document.getElementById('adminSignupModal').style.display = 'none';
+        openAdminLogin();
+    }
+
+    async function submitSignup() {
+        const email = document.getElementById('signupEmail').value.trim();
+        const err = document.getElementById('signupError');
+        const ok = document.getElementById('signupSuccess');
+
+        if (!email || !email.includes('@')) {
+            err.textContent = 'Please enter a valid email address.';
+            err.style.display = 'block'; ok.style.display = 'none'; return;
+        }
+
+        try {
+            // EmailJS - replace with your actual keys from emailjs.com
+            emailjs.init('YOUR_EMAILJS_PUBLIC_KEY');
+            await emailjs.send('YOUR_SERVICE_ID', 'YOUR_TEMPLATE_ID', {
+                to_email: 'lakandlsud@gmail.com',
+                from_email: email,
+                subject: `Lakán Admin Access Request - ${email}`,
+                message: `New admin access request from: ${email}\n\nPlease create an account for this user.`
+            });
+            err.style.display = 'none';
+            ok.style.display = 'block';
+            document.getElementById('signupEmail').value = '';
+            setTimeout(() => { document.getElementById('adminSignupModal').style.display = 'none'; }, 3000);
+        } catch(e) {
+            err.textContent = 'Failed to send request. Please try again.';
+            err.style.display = 'block';
+        }
+    }
     </script>
 
-    <!-- Leaflet JS -->
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-
-    <!-- App JavaScript -->
     <script src="{{ url_for('static', filename='js/campus_navigation.js') }}"></script>
     <script src="{{ url_for('static', filename='js/map_controller.js') }}"></script>
     <script src="{{ url_for('static', filename='js/admin_mode.js') }}"></script>
