@@ -417,9 +417,17 @@
                         ? `Welcome, ${name}! 👋 I'm Lakán. Ask me "How do I get to JFH?" or tap any building.`
                         : `Hi! I'm Lakán. Ask me "How do I get to JFH?" or tap any building on the map.`;
                     window.mobileApp.addMessage('bot', msg);
-                    if (userGPSLocation && userInsideCampus && window.adminMode) {
-                        window.adminMode.customLocation = userGPSLocation;
-                        window.adminMode.enabled = true;
+                    if (userGPSLocation && userInsideCampus) {
+                        // Set YOU marker on map
+                        const trySetLocation = () => {
+                            if (window.setAdminLocation) {
+                                window.setAdminLocation(userGPSLocation.lat, userGPSLocation.lng);
+                                if (window.adminMode) {
+                                    window.adminMode.enabled = true;
+                                }
+                            } else setTimeout(trySetLocation, 200);
+                        };
+                        trySetLocation();
                     }
                 } else setTimeout(greet, 100);
             };
