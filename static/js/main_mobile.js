@@ -137,8 +137,7 @@ function addMessage(type, text) {
     
     const content = document.createElement('div');
     content.className = 'message-content';
-    content.textContent = text;
-    
+    if (type === 'bot') { content.innerHTML = text; } else { content.textContent = text; }    
     if (type === 'user') {
         messageDiv.appendChild(content);
         messageDiv.appendChild(avatar);
