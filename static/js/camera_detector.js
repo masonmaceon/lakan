@@ -43,7 +43,15 @@ class CameraDetector {
         
         // Result OK button
         document.getElementById('resultOkBtn').addEventListener('click', () => {
+            const name = this.lastDetectedName;
+            const id = this.lastDetectedBuilding;
             this.closeModal();
+            if (id && window.mobileApp) {
+                setTimeout(() => {
+                    window.mobileApp.addMessage('bot',
+                        'I identified that as <strong>' + name + '</strong>. Would you like me to navigate you there? Just say "Navigate to ' + name + '"!');
+                }, 300);
+            }
         });
         
         // Close modal on background click
@@ -136,6 +144,8 @@ class CameraDetector {
         
         // Get building info
         const buildingInfo = this.getBuildingInfo(buildingName);
+        this.lastDetectedBuilding = buildingName;
+        this.lastDetectedName = buildingInfo.name;
         
         // Update UI
         document.getElementById('buildingName').textContent = buildingInfo.name;

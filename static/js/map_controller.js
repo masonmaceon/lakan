@@ -64,23 +64,23 @@ class CampusMapController {
     }
 
     drawRoute(route) {
-        // Main route line
-        const routeLine = L.polyline(route.coordinates, {
-            color: '#006341',
-            weight: 6,
-            opacity: 0.8,
-            lineCap: 'round',
-            lineJoin: 'round',
-            className: 'route-line'
-        }).addTo(this.map);
-
-        // Add outline for better visibility
+        // Main route outline (drawn first = lower z-order)
         const routeOutline = L.polyline(route.coordinates, {
             color: '#ffffff',
-            weight: 8,
+            weight: 10,
             opacity: 0.5,
             lineCap: 'round',
             lineJoin: 'round'
+        }).addTo(this.map);
+
+        // Main route line (on top of outline, below markers)
+        const routeLine = L.polyline(route.coordinates, {
+            color: '#006341',
+            weight: 6,
+            opacity: 0.85,
+            lineCap: 'round',
+            lineJoin: 'round',
+            className: 'route-line'
         }).addTo(this.map);
 
         this.activeLines.push(routeLine, routeOutline);
@@ -263,10 +263,12 @@ class CampusMapController {
         // Create or update user marker
         if (!this.userMarker) {
             this.userMarker = L.marker(coords, {
-                icon: this.createCustomIcon('👤', '#8b5cf6', '📍')
+                icon: this.createCustomIcon('👤', '#8b5cf6', '📍'),
+                zIndexOffset: 1000
             }).addTo(this.map);
         } else {
             this.userMarker.setLatLng(coords);
+            this.userMarker.setZIndexOffset(1000);
         }
 
         // Check if user is off route

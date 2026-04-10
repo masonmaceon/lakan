@@ -655,7 +655,7 @@ if __name__ == '__main__':
     print("=" * 60)
     print("  Chatbot: ✅ Ready" if chatbot else "  Chatbot: ❌ Not loaded")
     print("  Database: ✅ Connected" if db_pool else "  Database: ❌ Not connected")
-    print("  ML Detection: ✅ Ready" if detection_model else "  ML Detection: ❌ Not loaded")
+    print("  ML Detection: ✅ Ready (Roboflow HTTP API)")    
     print("=" * 60)
     print("\n🚀 Starting Flask server...")
     print("📍 Main app: http://localhost:5000")

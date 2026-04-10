@@ -141,7 +141,7 @@ function setAdminLocation(lat, lng) {
         adminMode.marker.remove();
     }
     
-    adminMode.marker = L.marker([lat, lng], {
+    adminMode.marker = L.marker([lat, lng], { zIndexOffset: 1000,
         icon: L.divIcon({
             className: 'admin-location-marker',
             html: `
