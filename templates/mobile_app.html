@@ -143,7 +143,7 @@
     <div class="top-nav">
         <div class="nav-left">
             <div class="logo">
-                <i class="fas fa-map-marked-alt"></i>
+                <img src="{{ url_for('static', filename='images/LAKAN_logo.png') }}" style="width:32px;height:32px;object-fit:contain;">
                 <span>Lakán</span>
             </div>
         </div>
@@ -242,8 +242,7 @@
     <!-- ===== WELCOME MODAL ===== -->
     <div id="welcomeModal" class="modal-overlay">
         <div class="modal-box">
-            <div style="font-size:52px;margin-bottom:8px">🗺️</div>
-            <h1>Lakán</h1>
+            <div style="margin-bottom:8px"><img src="{{ url_for('static', filename='images/LAKAN_logo.png') }}" style="width:80px;height:80px;object-fit:contain;mix-blend-mode:screen;"></div>            <h1>Lakán</h1>
             <p class="subtitle">DLSU-Dasmariñas Campus Navigator</p>
 
             <div class="how-box">
@@ -424,6 +423,10 @@
                                 window.setAdminLocation(userGPSLocation.lat, userGPSLocation.lng);
                                 if (window.adminMode) {
                                     window.adminMode.enabled = true;
+                                }
+                                // Start continuous GPS tracking to move YOU marker
+                                if (window.mobileApp && window.mobileApp.getMapController()) {
+                                    window.mobileApp.getMapController().startTracking();
                                 }
                             } else setTimeout(trySetLocation, 200);
                         };

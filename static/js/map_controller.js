@@ -89,45 +89,38 @@ class CampusMapController {
     }
 
     addStartEndMarkers(route) {
-        // Start marker
-        const startMarker = L.marker(route.coordinates[0], {
-            icon: this.createCustomIcon('S', '#22c55e', '🚶')
-        }).addTo(this.map);
-        
-        startMarker.bindPopup(`
-            <div class="route-popup">
-                <h3>Start Point</h3>
-                <p>${route.instructions[0].text}</p>
-            </div>
-        `);
+        if (!route || !route.coordinates || route.coordinates.length === 0) return;
 
-        // End marker
+        // Start marker - clean green dot
+        const startMarker = L.circleMarker(route.coordinates[0], {
+            radius: 8,
+            fillColor: '#22c55e',
+            color: '#ffffff',
+            weight: 3,
+            fillOpacity: 1,
+            zIndexOffset: 1000
+        }).addTo(this.map);
+
+        // End marker with destination label
+        const destName = route.endLocation?.name || 'Destination';
         const endMarker = L.marker(route.coordinates[route.coordinates.length - 1], {
             icon: L.divIcon({
                 className: 'custom-marker',
                 html: `<div style="
                     background: #006341;
                     color: white;
-                    padding: 6px 12px;
-                    border-radius: 20px;
-                    font-size: 13px;
+                    padding: 4px 10px;
+                    border-radius: 6px;
+                    font-size: 12px;
                     font-weight: bold;
                     white-space: nowrap;
-                    box-shadow: 0 2px 8px rgba(0,0,0,0.3);
-                    border: 2px solid white;
-                    transform: translateX(-50%);
-                ">📍 ${route.endLocation?.name || 'Destination'}</div>`,
-                iconSize: [0, 0],
-                iconAnchor: [0, 0]
-            })
+                    box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+                ">📍 ${destName}</div>`,
+                iconSize: [120, 28],
+                iconAnchor: [60, 28]
+            }),
+            zIndexOffset: 1000
         }).addTo(this.map);
-        
-        endMarker.bindPopup(`
-            <div class="route-popup">
-                <h3>Destination</h3>
-                <p>${route.instructions[route.instructions.length - 1].text}</p>
-            </div>
-        `);
 
         this.activeMarkers.push(startMarker, endMarker);
     }

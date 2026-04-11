@@ -221,6 +221,7 @@ function showNavigation(start, destination) {
         if (route && route.coordinates) {
             // Show route on map
             mapController.drawRoute(route);
+            mapController.addStartEndMarkers(route);
             mapController.fitToRoute(route);
             const mins = route.estimatedTime || Math.ceil(route.totalDistance / 80);
             const meters = route.totalDistance || 0;
