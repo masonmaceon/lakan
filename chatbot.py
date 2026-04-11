@@ -114,7 +114,7 @@ class CampusChatbot:
             locations = self.extract_locations(user_input_lower)
             
             # Buildings known to be disconnected from pathways
-            disconnected_buildings = ['CBAA', 'CTH', 'GMH', 'Gate 3', 'MTH']
+            disconnected_buildings = []
             
             if nav_intent['type'] == 'directions' and locations:
                 if len(locations) >= 2:
@@ -243,7 +243,7 @@ class CampusChatbot:
                                 reverse=True)
         
         for phrase, building_id in sorted_mappings:
-            if phrase in text:
+            if re.search(r'\b' + re.escape(phrase) + r'\b', text):
                 if building_id not in found_locations:
                     found_locations.append(building_id)
         
