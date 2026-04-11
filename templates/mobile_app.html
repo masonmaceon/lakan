@@ -417,7 +417,7 @@
                         ? `Welcome, ${name}! 👋 I'm Lakán. Ask me "How do I get to JFH?" or tap any building.`
                         : `Hi! I'm Lakán. Ask me "How do I get to JFH?" or tap any building on the map.`;
                     window.mobileApp.addMessage('bot', msg);
-                    if (userGPSLocation && userInsideCampus) {
+                    if (userGPSLocation) {
                         // Set YOU marker on map
                         const trySetLocation = () => {
                             if (window.setAdminLocation) {

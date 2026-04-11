@@ -152,8 +152,7 @@ class CampusChatbot:
                     building_info = self.get_building_info(locations[0])
                     building_name = building_info['name'] if building_info else locations[0]
                     return {
-                        'response': f"🗺️ Showing route from Gate 1 (Main Entrance) to {building_name}. Follow the green path!",
-                        'action': 'navigate',
+                        'response': f"🗺️ Showing route to {building_name}. Follow the green path!",                        'action': 'navigate',
                         'start': 'Gate 1',
                         'destination': locations[0]
                     }
