@@ -72,6 +72,10 @@ function setupChatbotToggle() {
     if (chatToggle && chatbotContainer) {
         chatToggle.addEventListener('click', () => {
             chatbotContainer.classList.toggle('minimized');
+            // Force map to recalculate size
+            setTimeout(() => {
+                if (window.map) window.map.invalidateSize();
+            }, 350);
         });
     }
 }
