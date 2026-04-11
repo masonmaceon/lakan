@@ -250,28 +250,36 @@ class CampusMapController {
         }
     }
 
-    updateUserPosition(position) {
-        const coords = [position.coords.latitude, position.coords.longitude];
+        updateUserPosition(position) {
+            const coords = [position.coords.latitude, position.coords.longitude];
 
-        // Create or update user marker
-        if (!this.userMarker) {
-            this.userMarker = L.marker(coords, {
-                icon: this.createCustomIcon('👤', '#8b5cf6', '📍'),
-                zIndexOffset: 1000
-            }).addTo(this.map);
-        } else {
-            this.userMarker.setLatLng(coords);
-            this.userMarker.setZIndexOffset(1000);
-        }
-
-        // Check if user is off route
-        if (this.currentRoute) {
-            const isOffRoute = this.checkIfOffRoute(coords);
-            if (isOffRoute) {
-                this.handleOffRoute(coords);
+            if (!this.userMarker) {
+                this.userMarker = L.marker(coords, {
+                    icon: L.divIcon({
+                        className: 'admin-location-marker',
+                        html: `<div style="
+                            width:24px;height:24px;
+                            background:#ff6b6b;
+                            border:3px solid white;
+                            border-radius:50%;
+                            box-shadow:0 2px 8px rgba(0,0,0,0.4);
+                            position:relative;
+                        "><div style="
+                            position:absolute;top:-22px;left:50%;
+                            transform:translateX(-50%);
+                            background:#ff6b6b;color:white;
+                            padding:2px 6px;border-radius:3px;
+                            white-space:nowrap;font-size:10px;font-weight:bold;
+                        ">YOU</div></div>`,
+                        iconSize: [24, 24],
+                        iconAnchor: [12, 12]
+                    }),
+                    zIndexOffset: 1000
+                }).addTo(this.map);
+            } else {
+                this.userMarker.setLatLng(coords);
             }
         }
-    }
 
     checkIfOffRoute(userCoords, threshold = 30) {
         if (!this.currentRoute) return false;

@@ -142,9 +142,23 @@ class CameraDetector {
         const buildingName = detection.class_name;
         const confidence = detection.confidence;
         
+        // Map model class names to DB building IDs
+        const classToId = {
+            'AYUNTAMIENTO': 'Admin',
+            'FOODSQUARE': 'Square',
+            'LIBRARY': 'Library',
+            'JFH': 'JFH',
+            'CEAT': 'CEAT',
+            'CBAA': 'CBAA',
+            'CTH': 'CTH',
+            'CTHM': 'CTHM',
+            'bad': null
+        };
+        
         // Get building info
-        const buildingInfo = this.getBuildingInfo(buildingName);
-        this.lastDetectedBuilding = buildingName;
+        const dbId = classToId[buildingName] !== undefined ? classToId[buildingName] : buildingName;
+        const buildingInfo = this.getBuildingInfo(dbId || buildingName);
+        this.lastDetectedBuilding = dbId;
         this.lastDetectedName = buildingInfo.name;
         
         // Update UI
