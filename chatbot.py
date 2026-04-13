@@ -278,8 +278,7 @@ Guidelines:
 - Be friendly and concise
 - Help with campus navigation and information
 - If asked about directions, suggest specific buildings
-- Keep responses short (2-3 sentences)
-"""
+- Keep responses to 1-2 sentences maximum, no bullet points"""
             
             # Build messages
             messages = [{"role": "system", "content": system_prompt}]
@@ -302,7 +301,7 @@ Guidelines:
                     'model': 'deepseek-chat',
                     'messages': messages,
                     'temperature': 0.7,
-                    'max_tokens': 150
+                    'max_tokens': 80
                 },
                 timeout=30
             )
