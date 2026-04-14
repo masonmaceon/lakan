@@ -207,6 +207,7 @@ class CampusMapController {
         this.routeLine = null;
         this.routeOutline = null;
         this.fullRouteCoords = [];
+        this._arrivedFired = false;
     }
 
     showLocation(coordinates, name, description = '') {
@@ -293,7 +294,7 @@ class CampusMapController {
                 this.userMarker.setLatLng(coords);
             }
 
-            // --- Path trimming ---
+            // --- Path trimming + arrival detection ---
             if (this.routeLine && this.fullRouteCoords.length > 1) {
                 let closestIndex = 0;
                 let minDist = Infinity;
@@ -313,6 +314,14 @@ class CampusMapController {
                         this.routeLine.setLatLngs(remaining);
                         if (this.routeOutline) this.routeOutline.setLatLngs(remaining);
                     }
+                }
+
+                // Arrival detection — check distance to final destination
+                const destination = this.fullRouteCoords[this.fullRouteCoords.length - 1];
+                const distToDestination = this.calculateDistance(coords, destination);
+                if (distToDestination < 15 && !this._arrivedFired) {
+                    this._arrivedFired = true;
+                    if (window.onUserArrived) window.onUserArrived();
                 }
             }
         }

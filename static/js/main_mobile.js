@@ -288,7 +288,15 @@ function showNavigation(start, destination) {
             if (cancelBtn) cancelBtn.style.display = 'block';
             const mins = route.estimatedTime || Math.ceil(route.totalDistance / 80);
             const meters = route.totalDistance || 0;
-            addMessage('bot', `🗺️ Route found! About ${meters}m · ~${mins} min walk.`);
+            const calories = Math.round(meters * 0.05);
+            addMessage('bot', `🗺️ Route found! About ${meters}m · ~${mins} min walk · ~${calories} kcal burned.`);
+
+            // Register arrival handler
+            window.onUserArrived = () => {
+                cancelNavigation();
+                addMessage('bot', `🎉 You have arrived! Great job — you burned about ${calories} kcal on that walk!`);
+                window.onUserArrived = null;
+            };
             
             // Expand chatbot if minimized
             const chatbotContainer = document.getElementById('chatbotContainer');
@@ -314,6 +322,7 @@ function cancelNavigation() {
     }
     const cancelBtn = document.getElementById('cancelNavBtn');
     if (cancelBtn) cancelBtn.style.display = 'none';
+    window.onUserArrived = null;
     addMessage('bot', '🗺️ Navigation cancelled.');
 }
 
