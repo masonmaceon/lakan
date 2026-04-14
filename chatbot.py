@@ -292,7 +292,7 @@ class CampusChatbot:
 
             memo_text = "Official DLSU-D announcements and memos:\n"
             for row in rows:
-                memo_text += f"\n--- {row['title']} ---\n{row['content'][:1500]}\n"
+                memo_text += f"\n--- {row['title']} ---\n{row['content'][:4000]}\n"
             return memo_text
 
         except Exception as e:
@@ -361,7 +361,7 @@ STRICT RULES:
                     'model': 'deepseek-chat',
                     'messages': messages,
                     'temperature': 0.7,
-                    'max_tokens': 80
+                    'max_tokens': 300
                 },
                 timeout=30
             )
