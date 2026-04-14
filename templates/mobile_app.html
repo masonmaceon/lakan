@@ -229,6 +229,7 @@
             ">
                 <i class="fas fa-file-pdf"></i> View Full PDF
             </a>
+            <img id="sheetImage" src="" alt="Announcement" style="display:none;width:100%;border-radius:10px;margin-top:8px;"
         </div>
     </div>
 
@@ -661,9 +662,26 @@
     function openAnnouncementSheet(item) {
         document.getElementById('sheetTitle').textContent = item.title;
         document.getElementById('sheetDate').textContent = item.uploaded_at;
-        document.getElementById('sheetPdfLink').href = `/uploads/memos/${item.filename}`;
-        const sheet = document.getElementById('announcementSheet');
-        sheet.style.display = 'flex';
+
+        const url = `/uploads/memos/${item.filename}`;
+        const ext = item.filename.split('.').pop().toLowerCase();
+        const isImage = ['png', 'jpg', 'jpeg', 'webp'].includes(ext);
+
+        const pdfLink = document.getElementById('sheetPdfLink');
+        const img = document.getElementById('sheetImage');
+
+        if (isImage) {
+            pdfLink.style.display = 'none';
+            img.src = url;
+            img.style.display = 'block';
+        } else {
+            img.style.display = 'none';
+            pdfLink.style.display = 'inline-flex';
+            pdfLink.href = url;
+            pdfLink.innerHTML = '<i class="fas fa-file-pdf"></i> View Full PDF';
+        }
+
+        document.getElementById('announcementSheet').style.display = 'flex';
     }
 
     function closeAnnouncementSheet() {
@@ -680,6 +698,6 @@
     <script src="{{ url_for('static', filename='js/campus_navigation.js') }}?v=5"></script>    <script src="{{ url_for('static', filename='js/map_controller.js') }}"></script>
     <script src="{{ url_for('static', filename='js/admin_mode.js') }}"></script>
     <script src="{{ url_for('static', filename='js/camera_detector.js') }}?v=4"></script>
-    <script src="{{ url_for('static', filename='js/main_mobile.js') }}?v=6"></script>
+    <script src="{{ url_for('static', filename='js/main_mobile.js') }}?v=4"></script>
 </body>
 </html>

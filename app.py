@@ -27,7 +27,7 @@ CORS(app)
 # Configuration
 UPLOAD_FOLDER = 'uploads/memos'
 TEMP_UPLOAD_FOLDER = 'temp_uploads'
-ALLOWED_EXTENSIONS = {'pdf', 'doc', 'docx'}
+ALLOWED_EXTENSIONS = {'pdf', 'doc', 'docx', 'png', 'jpg', 'jpeg', 'webp'}
 ALLOWED_IMAGE_EXTENSIONS = {'png', 'jpg', 'jpeg'}
 
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
@@ -637,7 +637,7 @@ def upload_memo():
             return jsonify({'error': 'No file selected'}), 400
 
         if not allowed_file(file.filename):
-            return jsonify({'error': 'Only PDF files allowed'}), 400
+            return jsonify({'error': 'Only PDF, Word, or image files allowed'}), 400
 
         filename = secure_filename(file.filename)
         filepath = os.path.join(UPLOAD_FOLDER, filename)
@@ -667,11 +667,14 @@ def upload_memo():
             finally:
                 conn.close()
 
-        # Process for RAG if available
-        try:
-            process_uploaded_memo(filepath)
-        except Exception:
-            pass
+        # Process for RAG only if it's a text-based document (not image)
+        image_extensions = {'png', 'jpg', 'jpeg', 'webp'}
+        file_ext = filename.rsplit('.', 1)[1].lower()
+        if file_ext not in image_extensions:
+            try:
+                process_uploaded_memo(filepath)
+            except Exception:
+                pass
 
         return jsonify({'message': f'Memo "{filename}" uploaded successfully!'})
 
