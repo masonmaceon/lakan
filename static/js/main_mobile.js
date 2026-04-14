@@ -302,12 +302,13 @@ function showNavigation(start, destination) {
             const mins = route.estimatedTime || Math.ceil(route.totalDistance / 80);
             const meters = route.totalDistance || 0;
             const calories = Math.round(meters * 0.05);
-            addMessage('bot', `🗺️ Route found! About ${meters}m · ~${mins} min walk · ~${calories} kcal burned.`);
+            const destName = route.endLocation?.name || destination;
+            addMessage('bot', `🗺️ Route found! About ${meters}m · ~${mins} min walk.`);
 
             // Register arrival handler
             window.onUserArrived = () => {
                 cancelNavigation();
-                addMessage('bot', `🎉 You have arrived! Great job — you burned about ${calories} kcal on that walk!`);
+                addMessage('bot', `🎉 You have arrived at ${destName}!<br>📍 ${meters}m walked · ⏱️ ~${mins} min · 🔥 ${calories} kcal burned`);
                 window.onUserArrived = null;
             };
             
