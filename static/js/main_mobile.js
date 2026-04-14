@@ -9,6 +9,7 @@ console.log('🚀 Starting Mobile Campus Navigation...');
 let mapController = null;
 let navigationEngine = null;
 let isInitialized = false;
+let lastMentionedBuilding = null; // tracks last building shown/mentioned
 
 // Initialize when DOM is ready
 document.addEventListener('DOMContentLoaded', async () => {
@@ -95,7 +96,14 @@ async function sendMessage() {
     
     // Show typing indicator
     const typingId = addTypingIndicator();
-    
+
+    // If user is following up on a previously shown building, navigate directly
+    if (lastMentionedBuilding && isFollowUpNavigation(message)) {
+        removeTypingIndicator(typingId);
+        showNavigation('Gate 1', lastMentionedBuilding);
+        return;
+    }
+
     try {
         // Send to chatbot API
         const response = await fetch('/api/chat', {
@@ -114,8 +122,15 @@ async function sendMessage() {
         // Add bot response
         addMessage('bot', data.response || 'Sorry, I couldn\'t understand that.');
         
-        // If there's a destination, show navigation
-        if (data.destination) {
+        // Handle action from chatbot
+        if (data.action === 'navigate' && data.destination) {
+            lastMentionedBuilding = data.destination;
+            showNavigation(data.start || 'Gate 1', data.destination);
+        } else if (data.action === 'show_location' && data.location) {
+            lastMentionedBuilding = data.location;
+            showBuildingOnMap(data.location);
+        } else if (data.destination) {
+            lastMentionedBuilding = data.destination;
             showNavigation(data.start || 'Gate 1', data.destination);
         }
         
@@ -189,6 +204,48 @@ function removeTypingIndicator(id) {
     if (indicator) {
         indicator.remove();
     }
+}
+
+/**
+ * Focus map on a building without drawing a route
+ */
+function showBuildingOnMap(buildingId) {
+    if (!navigationEngine || !mapController) return;
+
+    let coords = null;
+    let name = buildingId;
+
+    if (navigationEngine.buildings && navigationEngine.buildings.has(buildingId)) {
+        const b = navigationEngine.buildings.get(buildingId);
+        coords = b.coordinates;
+        name = b.name || buildingId;
+    }
+
+    if (coords) {
+        mapController.clearRoute();
+        mapController.showLocation(coords, name);
+        // Minimize chatbot so map is visible
+        const chatbotContainer = document.getElementById('chatbotContainer');
+        if (chatbotContainer && !chatbotContainer.classList.contains('minimized')) {
+            chatbotContainer.classList.add('minimized');
+            setTimeout(() => { if (window.map) window.map.invalidateSize(); }, 350);
+        }
+    } else {
+        console.warn(`⚠️ No coordinates found for building: ${buildingId}`);
+    }
+}
+
+/**
+ * Detect if the user is following up to navigate to the last mentioned building
+ */
+function isFollowUpNavigation(text) {
+    const t = text.toLowerCase();
+    const triggers = [
+        'how to go', 'how do i get', 'navigate me', 'take me there',
+        'go there', 'directions there', 'route there', 'get there',
+        'how to get there', 'navigate there', 'bring me there', 'lead me there'
+    ];
+    return triggers.some(trigger => t.includes(trigger));
 }
 
 function showNavigation(start, destination) {

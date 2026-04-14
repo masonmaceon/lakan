@@ -42,6 +42,7 @@ try:
         pool_name="lakan_pool",
         pool_size=5,
         host=os.getenv('MYSQL_HOST', 'localhost'),
+        port=int(os.getenv('MYSQL_PORT', 3306)),
         user=os.getenv('MYSQL_USER', 'root'),
         password=os.getenv('MYSQL_PASSWORD', ''),
         database=os.getenv('MYSQL_DATABASE', 'lakan_db')
@@ -627,25 +628,95 @@ def admin_login():
     
 @app.route('/admin/upload-memo', methods=['POST'])
 def upload_memo():
+    try:
+        if 'memo' not in request.files:
+            return jsonify({'error': 'No file provided'}), 400
+
+        file = request.files['memo']
+        if file.filename == '':
+            return jsonify({'error': 'No file selected'}), 400
+
+        if not allowed_file(file.filename):
+            return jsonify({'error': 'Only PDF files allowed'}), 400
+
+        filename = secure_filename(file.filename)
+        filepath = os.path.join(UPLOAD_FOLDER, filename)
+        file.save(filepath)
+
+        # Strip extension for display title, replace underscores/dashes with spaces
+        title = os.path.splitext(filename)[0].replace('_', ' ').replace('-', ' ')
+
+        # Save memo metadata to DB
+        conn = get_db_connection()
+        if conn:
+            try:
+                cursor = conn.cursor()
+                cursor.execute("""
+                    CREATE TABLE IF NOT EXISTS memos (
+                        id INT AUTO_INCREMENT PRIMARY KEY,
+                        title VARCHAR(255) NOT NULL,
+                        filename VARCHAR(255) NOT NULL,
+                        uploaded_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                    )
+                """)
+                cursor.execute(
+                    "INSERT INTO memos (title, filename) VALUES (%s, %s)",
+                    (title, filename)
+                )
+                conn.commit()
+            finally:
+                conn.close()
+
+        # Process for RAG if available
         try:
-            if 'memo' not in request.files:
-                return jsonify({'error': 'No file provided'}), 400
-            
-            file = request.files['memo']
-            if file.filename == '':
-                return jsonify({'error': 'No file selected'}), 400
-            
-            if not allowed_file(file.filename):
-                return jsonify({'error': 'Only PDF files allowed'}), 400
-            
-            filename = secure_filename(file.filename)
-            filepath = os.path.join(UPLOAD_FOLDER, filename)
-            file.save(filepath)
-            
-            return jsonify({'message': f'Memo "{filename}" uploaded successfully!'})
-        
-        except Exception as e:
-            return jsonify({'error': str(e)}), 500
+            process_uploaded_memo(filepath)
+        except Exception:
+            pass
+
+        return jsonify({'message': f'Memo "{filename}" uploaded successfully!'})
+
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+
+@app.route('/api/announcements', methods=['GET'])
+def get_announcements():
+    try:
+        conn = get_db_connection()
+        if not conn:
+            print("❌ No DB connection")
+            return jsonify([])
+
+        cursor = conn.cursor(dictionary=True)
+        cursor.execute("SELECT DATABASE()")
+        print("📦 Connected DB:", cursor.fetchone())
+        cursor.execute("SELECT COUNT(*) as cnt FROM memos")
+        print("📊 Memos count:", cursor.fetchone())
+        cursor.execute("SELECT id, title, filename, uploaded_at FROM memos ORDER BY uploaded_at DESC LIMIT 3")
+        rows = cursor.fetchall()
+        print(f"✅ Memos found: {rows}")
+        conn.close()
+
+        result = []
+        for row in rows:
+            result.append({
+                'id': row['id'],
+                'title': row['title'],
+                'filename': row['filename'],
+                'uploaded_at': row['uploaded_at'].strftime('%b %d, %Y') if row['uploaded_at'] else ''
+            })
+
+        print(f"✅ Result: {result}")
+        return jsonify(result)
+
+    except Exception as e:
+        print(f"❌ Error: {e}")
+        return jsonify([])
+
+@app.route('/uploads/memos/<path:filename>')
+def serve_memo(filename):
+    """Serve uploaded memo PDFs"""
+    return send_from_directory(UPLOAD_FOLDER, filename)
 
 # ==================== START SERVER ====================
 

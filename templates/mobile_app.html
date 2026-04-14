@@ -107,11 +107,6 @@
         .gps-dot.outside{background:#dc2626}
         .gps-dot.searching{background:#f59e0b;animation:blink 1s infinite}
         @keyframes blink{0%,100%{opacity:1}50%{opacity:0.3}}
-        @keyframes breathe {
-            0%,100% { box-shadow: 0 4px 12px rgba(220,38,38,0.4), 0 0 0 0 rgba(220,38,38,0.5); transform: translateX(-50%) scale(1); }
-            50%      { box-shadow: 0 4px 20px rgba(220,38,38,0.6), 0 0 0 10px rgba(220,38,38,0); transform: translateX(-50%) scale(1.04); }
-        }
-        #cancelNavBtn { animation: breathe 1.8s ease-in-out infinite; }
         .how-box{
             background: rgba(0, 99, 65, 0.15);
             border: 1px solid rgba(0, 99, 65, 0.35);
@@ -174,9 +169,12 @@
     <div id="map"></div>
 
     <!-- Cancel Navigation Button -->
-    <button id="cancelNavBtn" onclick="window.cancelNavigation()" style="display:none;position:fixed;bottom:220px;left:50%;transform:translateX(-50%);z-index:500;background:#dc2626;color:white;border:none;padding:10px 24px;border-radius:20px;font-size:14px;font-weight:700;cursor:pointer;white-space:nowrap;">
+    <div id="cancelNavBtn" style="display:none;position:fixed;bottom:220px;left:50%;transform:translateX(-50%);z-index:500;background:#dc2626;color:white;border:none;padding:10px 24px;border-radius:20px;font-size:14px;font-weight:700;cursor:pointer;box-shadow:0 4px 12px rgba(0,0,0,0.3);white-space:nowrap;" onclick="window.cancelNavigation()">
         ✕ Cancel Navigation
-    </button>
+    </div>
+    <div id="cancelNavBtn" style="display:none;position:fixed;bottom:210px;left:50%;transform:translateX(-50%);z-index:500;background:#dc2626;color:white;border:none;padding:10px 24px;border-radius:20px;font-size:14px;font-weight:700;cursor:pointer;box-shadow:0 4px 12px rgba(0,0,0,0.3);" onclick="cancelNavigation()">
+    ✕ Cancel Navigation
+    </div>
 
     <div class="chatbot-container" id="chatbotContainer">
         <div class="chatbot-header">
@@ -189,9 +187,48 @@
             </button>
         </div>
         <div class="chatbot-messages" id="chatMessages"></div>
+
+        <!-- Announcement Strip -->
+        <div id="announcementStrip" style="
+            display: none;
+            padding: 6px 10px 2px;
+            background: transparent;
+        ">
+            <div style="font-size:10px;color:#6b7280;font-weight:600;letter-spacing:0.5px;text-transform:uppercase;margin-bottom:4px;">📢 Announcements</div>
+            <div id="announcementPills" style="display:flex;gap:6px;overflow-x:auto;padding-bottom:4px;scrollbar-width:none;"></div>
+        </div>
+
         <div class="chatbot-input">
             <input type="text" id="userInput" placeholder="Where do you want to go?" autocomplete="off">
             <button id="sendBtn"><i class="fas fa-paper-plane"></i></button>
+        </div>
+    </div>
+
+    <!-- Announcement Bottom Sheet -->
+    <div id="announcementSheet" style="
+        display:none;position:fixed;inset:0;z-index:9999;
+        background:rgba(0,0,0,0.45);backdrop-filter:blur(4px);
+        align-items:flex-end;justify-content:center;
+    " onclick="if(event.target===this) closeAnnouncementSheet()">
+        <div style="
+            background:white;border-radius:20px 20px 0 0;
+            width:100%;max-height:70vh;overflow-y:auto;
+            padding:20px 20px 36px;
+            animation:slideUp 0.3s cubic-bezier(0.4,0,0.2,1);
+        ">
+            <div style="width:40px;height:4px;background:#e5e7eb;border-radius:2px;margin:0 auto 16px;"></div>
+            <div style="font-size:11px;color:#6b7280;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px;" id="sheetDate"></div>
+            <h2 style="font-size:18px;font-weight:700;color:#111827;margin:0 0 12px;" id="sheetTitle"></h2>
+            <hr style="border:none;border-top:1px solid #f3f4f6;margin-bottom:14px;">
+            <p style="font-size:13px;color:#6b7280;margin:0 0 16px;">This announcement was uploaded by the DLSU-D administration.</p>
+            <a id="sheetPdfLink" href="#" target="_blank" style="
+                display:inline-flex;align-items:center;gap:8px;
+                background:#006341;color:white;
+                padding:10px 20px;border-radius:10px;
+                font-size:14px;font-weight:600;text-decoration:none;
+            ">
+                <i class="fas fa-file-pdf"></i> View Full PDF
+            </a>
         </div>
     </div>
 
@@ -578,6 +615,11 @@
         if (!window.map) return;
         if (window.mobileApp && window.mobileApp.getMapController()) {
             const mc = window.mobileApp.getMapController();
+            if (mc.userMarker) {
+                const pos = mc.userMarker.getLatLng();
+                window.map.flyTo([pos.lat, pos.lng], 19, { animate: true, duration: 0.8 });
+                return;
+            }
             if (mc.currentRoute && mc.currentRoute.coordinates && mc.currentRoute.coordinates.length > 0) {
                 mc.fitToRoute(mc.currentRoute);
                 return;
@@ -585,12 +627,59 @@
         }
         window.map.setView([14.3217, 120.9636], 17);
     };
+
+    // ===== ANNOUNCEMENT FEED =====
+    async function loadAnnouncements() {
+        try {
+            const res = await fetch('/api/announcements');
+            const data = await res.json();
+            if (!data.length) return;
+
+            const strip = document.getElementById('announcementStrip');
+            const pills = document.getElementById('announcementPills');
+            strip.style.display = 'block';
+            pills.innerHTML = '';
+
+            data.forEach(item => {
+                const pill = document.createElement('button');
+                pill.style.cssText = `
+                    flex-shrink:0;background:rgba(0,99,65,0.08);
+                    border:1px solid rgba(0,99,65,0.2);border-radius:20px;
+                    padding:5px 12px;font-size:12px;font-weight:600;
+                    color:#006341;cursor:pointer;white-space:nowrap;
+                    max-width:200px;overflow:hidden;text-overflow:ellipsis;
+                `;
+                pill.textContent = '📢 ' + item.title;
+                pill.onclick = () => openAnnouncementSheet(item);
+                pills.appendChild(pill);
+            });
+        } catch (e) {
+            console.warn('Could not load announcements:', e);
+        }
+    }
+
+    function openAnnouncementSheet(item) {
+        document.getElementById('sheetTitle').textContent = item.title;
+        document.getElementById('sheetDate').textContent = item.uploaded_at;
+        document.getElementById('sheetPdfLink').href = `/uploads/memos/${item.filename}`;
+        const sheet = document.getElementById('announcementSheet');
+        sheet.style.display = 'flex';
+    }
+
+    function closeAnnouncementSheet() {
+        document.getElementById('announcementSheet').style.display = 'none';
+    }
+
+    // Load announcements once app is ready
+    document.addEventListener('DOMContentLoaded', () => {
+        setTimeout(loadAnnouncements, 1500);
+    });
     </script>
 
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script src="{{ url_for('static', filename='js/campus_navigation.js') }}?v=5"></script>    <script src="{{ url_for('static', filename='js/map_controller.js') }}"></script>
     <script src="{{ url_for('static', filename='js/admin_mode.js') }}"></script>
     <script src="{{ url_for('static', filename='js/camera_detector.js') }}?v=4"></script>
-    <script src="{{ url_for('static', filename='js/main_mobile.js') }}?v=4"></script>
+    <script src="{{ url_for('static', filename='js/main_mobile.js') }}?v=6"></script>
 </body>
 </html>

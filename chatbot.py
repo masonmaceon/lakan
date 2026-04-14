@@ -47,6 +47,9 @@ class CampusChatbot:
         self.place_descriptions = {
             'Square': 'an open-air area with food stalls and small stores, not a building',
         }
+
+        # Add manual aliases for common terms
+        manual_aliases = {
             'administration': 'Admin',
             'main entrance': 'Gate 1',
             'main gate': 'Gate 1',
