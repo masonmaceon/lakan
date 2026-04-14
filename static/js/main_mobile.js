@@ -98,7 +98,8 @@ async function sendMessage() {
     const typingId = addTypingIndicator();
 
     // If user is following up on a previously shown building, navigate directly
-    if (lastMentionedBuilding && isFollowUpNavigation(message)) {
+    // BUT only if they didn't mention a specific building in this message
+    if (lastMentionedBuilding && isFollowUpNavigation(message) && !containsBuildingName(message)) {
         removeTypingIndicator(typingId);
         showNavigation('Gate 1', lastMentionedBuilding);
         return;
@@ -233,6 +234,18 @@ function showBuildingOnMap(buildingId) {
     } else {
         console.warn(`⚠️ No coordinates found for building: ${buildingId}`);
     }
+}
+
+/**
+ * Check if message contains a known building name
+ */
+function containsBuildingName(text) {
+    if (!navigationEngine || !navigationEngine.buildings) return false;
+    const t = text.toLowerCase();
+    for (const [id] of navigationEngine.buildings) {
+        if (t.includes(id.toLowerCase())) return true;
+    }
+    return false;
 }
 
 /**
