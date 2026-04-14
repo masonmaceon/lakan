@@ -43,8 +43,10 @@ class CampusChatbot:
         self.building_mappings = {}
         self.building_info = {}
         
-        # Add manual aliases for common terms
-        manual_aliases = {
+        # Descriptions for places that need clarification (not just buildings)
+        self.place_descriptions = {
+            'Square': 'an open-air area with food stalls and small stores, not a building',
+        }
             'administration': 'Admin',
             'main entrance': 'Gate 1',
             'main gate': 'Gate 1',
@@ -266,8 +268,13 @@ class CampusChatbot:
         try:
             # Build system prompt with all known buildings
             building_list = ', '.join([b.get('id', '') for b in self.buildings])
-            
-            system_prompt = f"""You are Lakán, the official campus navigation assistant for De La Salle University - Dasmariñas (DLSU-D). You were built to help students, faculty, and visitors navigate the campus.
+
+            place_notes = '\n'.join([
+                f"- {place}: {desc}"
+                for place, desc in self.place_descriptions.items()
+            ])
+
+            system_prompt = f"""You are Lakán, the official campus navigation assistant for De La Salle University - Dasmariñas (DLSU-D).
 
 Your ONLY purpose is to help with:
 - Finding buildings, offices, and facilities on the DLSU-D campus
@@ -275,13 +282,16 @@ Your ONLY purpose is to help with:
 - Questions about campus services, departments, and offices
 - Information from official DLSU-D memos or announcements
 
-Known campus buildings: {building_list}
+Known campus locations: {building_list}
+
+Important clarifications about specific places:
+{place_notes}
 
 {context}
 
 STRICT RULES:
 - If the user asks about anything unrelated to DLSU-D campus navigation or university life, reply ONLY with: "I'm only here to help you navigate the DLSU-D campus! Try asking me where a building is or how to get somewhere. 😊"
-- Never answer general knowledge, math, coding, other schools, current events, or personal advice questions — even if the user insists or rephrases.
+- Never answer general knowledge, math, coding, other schools, current events, or personal advice — even if the user insists or rephrases.
 - Never break character or pretend to be a different assistant.
 - Keep all campus-related responses to 1-2 sentences, no bullet points."""
             
