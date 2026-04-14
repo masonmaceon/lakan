@@ -190,13 +190,15 @@ class CampusChatbot:
     
     def is_greeting(self, text):
         """Check if message is a greeting"""
+        import re
         greetings = ['hello', 'hi', 'hey', 'greetings', 'good morning', 'good afternoon']
-        return any(greeting in text for greeting in greetings)
-    
+        return any(re.search(r'\b' + g + r'\b', text) for g in greetings)
+
     def is_farewell(self, text):
         """Check if message is a farewell"""
+        import re
         farewells = ['bye', 'goodbye', 'see you', 'thanks', 'thank you']
-        return any(farewell in text for farewell in farewells)
+        return any(re.search(r'\b' + g + r'\b', text) for g in farewells)
     
     def detect_navigation_intent(self, text):
         """Detect if user wants navigation"""
