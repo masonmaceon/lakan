@@ -660,8 +660,8 @@ def upload_memo():
                     )
                 """)
                 cursor.execute(
-                    "INSERT INTO memos (title, filename) VALUES (%s, %s)",
-                    (title, filename)
+                    "INSERT INTO memos (title, filename, content) VALUES (%s, %s, %s)",
+                    (title, filename, '')
                 )
                 conn.commit()
             finally:
@@ -688,10 +688,6 @@ def get_announcements():
             return jsonify([])
 
         cursor = conn.cursor(dictionary=True)
-        cursor.execute("SELECT DATABASE()")
-        print("📦 Connected DB:", cursor.fetchone())
-        cursor.execute("SELECT COUNT(*) as cnt FROM memos")
-        print("📊 Memos count:", cursor.fetchone())
         cursor.execute("SELECT id, title, filename, uploaded_at FROM memos ORDER BY uploaded_at DESC LIMIT 3")
         rows = cursor.fetchall()
         print(f"✅ Memos found: {rows}")
