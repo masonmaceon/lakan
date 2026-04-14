@@ -266,6 +266,37 @@ class CampusChatbot:
                 }
         return None
     
+    def get_memo_context(self):
+        """Fetch memo contents from DB to inject into system prompt"""
+        try:
+            import mysql.connector
+            from dotenv import load_dotenv
+            load_dotenv()
+
+            conn = mysql.connector.connect(
+                host=os.getenv('MYSQL_HOST', 'localhost'),
+                port=int(os.getenv('MYSQL_PORT', 3306)),
+                user=os.getenv('MYSQL_USER', 'root'),
+                password=os.getenv('MYSQL_PASSWORD', ''),
+                database=os.getenv('MYSQL_DATABASE', 'lakan_db')
+            )
+            cursor = conn.cursor(dictionary=True)
+            cursor.execute("SELECT title, content FROM memos WHERE content != '' ORDER BY uploaded_at DESC LIMIT 5")
+            rows = cursor.fetchall()
+            conn.close()
+
+            if not rows:
+                return ""
+
+            memo_text = "Official DLSU-D announcements and memos:\n"
+            for row in rows:
+                memo_text += f"\n--- {row['title']} ---\n{row['content'][:1500]}\n"
+            return memo_text
+
+        except Exception as e:
+            print(f"⚠️ Could not load memo context: {e}")
+            return ""
+
     def query_deepseek(self, user_message, context="", conversation=[]):
         """Query DeepSeek API"""
         try:
@@ -276,6 +307,9 @@ class CampusChatbot:
                 f"- {place}: {desc}"
                 for place, desc in self.place_descriptions.items()
             ])
+
+            # Fetch memo contents from DB for RAG
+            memo_context = self.get_memo_context()
 
             system_prompt = f"""You are Lakán, the official campus navigation assistant for De La Salle University - Dasmariñas (DLSU-D).
 
@@ -289,6 +323,8 @@ Known campus locations: {building_list}
 
 Important clarifications about specific places:
 {place_notes}
+
+{memo_context}
 
 {context}
 
