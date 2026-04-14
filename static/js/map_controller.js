@@ -5,6 +5,9 @@ class CampusMapController {
         this.mapElementId = mapElementId;
         this.map = null;
         this.currentRoute = null;
+        this.routeLine = null;        // live trimmed polyline
+        this.routeOutline = null;     // white outline polyline
+        this.fullRouteCoords = [];    // original coords preserved for trimming
         this.userMarker = null;
         this.activeMarkers = [];
         this.activeLines = [];
@@ -64,6 +67,9 @@ class CampusMapController {
     }
 
     drawRoute(route) {
+        // Store full coords for progressive trimming
+        this.fullRouteCoords = [...route.coordinates];
+
         // Main route outline (drawn first = lower z-order)
         const routeOutline = L.polyline(route.coordinates, {
             color: '#ffffff',
@@ -82,6 +88,10 @@ class CampusMapController {
             lineJoin: 'round',
             className: 'route-line'
         }).addTo(this.map);
+
+        // Keep direct refs for trimming
+        this.routeLine = routeLine;
+        this.routeOutline = routeOutline;
 
         this.activeLines.push(routeLine, routeOutline);
 
@@ -194,6 +204,9 @@ class CampusMapController {
         this.activeLines = [];
 
         this.currentRoute = null;
+        this.routeLine = null;
+        this.routeOutline = null;
+        this.fullRouteCoords = [];
     }
 
     showLocation(coordinates, name, description = '') {
@@ -278,6 +291,29 @@ class CampusMapController {
                 }).addTo(this.map);
             } else {
                 this.userMarker.setLatLng(coords);
+            }
+
+            // --- Path trimming ---
+            if (this.routeLine && this.fullRouteCoords.length > 1) {
+                let closestIndex = 0;
+                let minDist = Infinity;
+
+                for (let i = 0; i < this.fullRouteCoords.length; i++) {
+                    const d = this.calculateDistance(coords, this.fullRouteCoords[i]);
+                    if (d < minDist) {
+                        minDist = d;
+                        closestIndex = i;
+                    }
+                }
+
+                // Only trim if user is within 25m of the route
+                if (minDist < 25) {
+                    const remaining = this.fullRouteCoords.slice(closestIndex);
+                    if (remaining.length >= 2) {
+                        this.routeLine.setLatLngs(remaining);
+                        if (this.routeOutline) this.routeOutline.setLatLngs(remaining);
+                    }
+                }
             }
         }
 
