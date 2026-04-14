@@ -227,6 +227,8 @@ function showNavigation(start, destination) {
             mapController.drawRoute(route);
             mapController.addStartEndMarkers(route);
             mapController.fitToRoute(route);
+            const cancelBtn = document.getElementById('cancelNavBtn');
+            if (cancelBtn) cancelBtn.style.display = 'block';
             const mins = route.estimatedTime || Math.ceil(route.totalDistance / 80);
             const meters = route.totalDistance || 0;
             addMessage('bot', `🗺️ Route found! About ${meters}m · ~${mins} min walk.`);
@@ -245,6 +247,21 @@ function showNavigation(start, destination) {
         addMessage('bot', 'Sorry, there was an error showing the route.');
     }
 }
+
+/**
+ * Cancel active navigation and clear the route from the map
+ */
+function cancelNavigation() {
+    if (mapController) {
+        mapController.clearRoute();
+    }
+    const cancelBtn = document.getElementById('cancelNavBtn');
+    if (cancelBtn) cancelBtn.style.display = 'none';
+    addMessage('bot', '🗺️ Navigation cancelled.');
+}
+
+// Expose globally so the onclick in mobile_app.html can reach it
+window.cancelNavigation = cancelNavigation;
 
 /**
  * Hide loading overlay
