@@ -107,6 +107,11 @@
         .gps-dot.outside{background:#dc2626}
         .gps-dot.searching{background:#f59e0b;animation:blink 1s infinite}
         @keyframes blink{0%,100%{opacity:1}50%{opacity:0.3}}
+        @keyframes breathe {
+            0%,100% { box-shadow: 0 4px 12px rgba(220,38,38,0.4), 0 0 0 0 rgba(220,38,38,0.5); transform: translateX(-50%) scale(1); }
+            50%      { box-shadow: 0 4px 20px rgba(220,38,38,0.6), 0 0 0 10px rgba(220,38,38,0); transform: translateX(-50%) scale(1.04); }
+        }
+        #cancelNavBtn { animation: breathe 1.8s ease-in-out infinite; }
         .how-box{
             background: rgba(0, 99, 65, 0.15);
             border: 1px solid rgba(0, 99, 65, 0.35);
@@ -169,7 +174,7 @@
     <div id="map"></div>
 
     <!-- Cancel Navigation Button -->
-    <button id="cancelNavBtn" onclick="window.cancelNavigation()" style="display:none;position:fixed;bottom:220px;left:50%;transform:translateX(-50%);z-index:500;background:#dc2626;color:white;border:none;padding:10px 24px;border-radius:20px;font-size:14px;font-weight:700;cursor:pointer;box-shadow:0 4px 12px rgba(0,0,0,0.3);white-space:nowrap;">
+    <button id="cancelNavBtn" onclick="window.cancelNavigation()" style="display:none;position:fixed;bottom:220px;left:50%;transform:translateX(-50%);z-index:500;background:#dc2626;color:white;border:none;padding:10px 24px;border-radius:20px;font-size:14px;font-weight:700;cursor:pointer;white-space:nowrap;">
         ✕ Cancel Navigation
     </button>
 
