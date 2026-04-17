@@ -436,6 +436,13 @@
                 : '⚠️ You are outside campus. Navigation is only available on-site.';
             btn.textContent = '📍 GPS Enabled';
             btn.style.opacity = '0.6';
+            // Update crosshair button state based on campus status
+            const recenterBtn = document.getElementById('recenterBtn');
+            if (recenterBtn) {
+                recenterBtn.style.opacity = userInsideCampus ? '1' : '0.35';
+                recenterBtn.style.pointerEvents = userInsideCampus ? 'auto' : 'none';
+                recenterBtn.title = userInsideCampus ? 'Recenter Map' : 'Only available inside campus';
+            }
         }, () => {
             dot.className = 'gps-dot outside';
             text.textContent = 'Could not get location. Please allow GPS access.';
@@ -613,6 +620,18 @@
 
     window.recenterMap = function() {
         if (!window.map) return;
+
+        // Disable button if user is outside campus
+        if (userGPSLocation && !userInsideCampus) {
+            const btn = document.getElementById('recenterBtn');
+            if (btn) {
+                btn.style.opacity = '0.35';
+                btn.style.pointerEvents = 'none';
+                btn.title = 'Only available inside campus';
+            }
+            return;
+        }
+
         if (window.mobileApp && window.mobileApp.getMapController()) {
             const mc = window.mobileApp.getMapController();
             if (mc.userMarker) {
