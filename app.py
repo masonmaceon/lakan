@@ -502,6 +502,7 @@ def chat():
     try:
         data = request.get_json()
         message = data.get('message', '')
+        user_location = data.get('userLocation', None)
         
         if not chatbot:
             return jsonify({
@@ -509,7 +510,7 @@ def chat():
                 'destination': None
             })
         
-        response = chatbot.get_response(message)
+        response = chatbot.get_response(message, user_location=user_location)
         return jsonify(response)
         
     except Exception as e:

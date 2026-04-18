@@ -89,9 +89,20 @@ class CampusChatbot:
         
         print(f"📍 Auto-generated {len(self.building_mappings)} building name variations")
     
-    def get_response(self, user_input, context="", conversation=[]):
+    def get_response(self, user_input, context="", conversation=[], user_location=None):
         """Main entry point - get chatbot response"""
         user_input_lower = user_input.lower()
+
+        # Inject location context if available
+        location_context = ""
+        if user_location:
+            nearest = self.find_nearest_gate(user_location)
+            if nearest:
+                location_context = f"\nUser's current location: lat={user_location.get('lat')}, lng={user_location.get('lng')}. Nearest gate to user: {nearest['name']} ({nearest['distance_m']}m away)."
+
+        # Check for nearest gate intent - handle directly with location awareness
+        if self.is_gate_query(user_input_lower):
+            return self.handle_gate_query(user_location)
         
         # 1. Check for greetings
         if self.is_greeting(user_input_lower):
@@ -181,7 +192,7 @@ class CampusChatbot:
         
         # 4. Use DeepSeek for general queries
         if self.deepseek_enabled:
-            return self.query_deepseek(user_input, context, conversation)
+            return self.query_deepseek(user_input, context + location_context, conversation)
         else:
             return {
                 'response': "I'm not sure how to help with that. Try asking 'How do I get to JFH?' or 'Where is the library?'",
@@ -268,6 +279,108 @@ class CampusChatbot:
                 }
         return None
     
+    # Gate coordinates and access rules
+    GATES = {
+        'Gate 1': {
+            'coords': (14.321726, 120.963558),
+            'pedestrian': True,
+            'vehicle': False,
+            'note': 'Main entrance. Pedestrians only — no vehicles allowed.'
+        },
+        'Gate 2': {
+            'coords': (14.322526, 120.96341),
+            'pedestrian': False,
+            'vehicle': True,
+            'note': 'Vehicles only. Nearest to Dasmariñas Bagong Bayan area.'
+        },
+        'Gate 3': {
+            'coords': (14.32825137, 120.9569752),
+            'pedestrian': True,
+            'vehicle': True,
+            'note': 'Open to both pedestrians and vehicles. Auxiliary entry.'
+        },
+        'Gate 4': {
+            'coords': (14.320437, 120.963697),
+            'pedestrian': False,
+            'vehicle': True,
+            'note': 'Vehicles only. Nearest to PCH, COS, and Admin buildings.'
+        },
+    }
+
+    def is_gate_query(self, text):
+        """Detect if user is asking about nearest gate or exit"""
+        keywords = [
+            'nearest gate', 'closest gate', 'nearest exit', 'closest exit',
+            'how do i exit', 'how to exit', 'where is the exit', 'how to leave',
+            'which gate', 'what gate', 'gate near me', 'exit campus',
+            'leave campus', 'way out', 'get out'
+        ]
+        return any(k in text for k in keywords)
+
+    def find_nearest_gate(self, user_location):
+        """Find the nearest gate to the user's location"""
+        if not user_location:
+            return None
+        try:
+            import math
+            lat = float(user_location.get('lat', 0))
+            lng = float(user_location.get('lng', 0))
+
+            nearest = None
+            min_dist = float('inf')
+
+            for gate_name, info in self.GATES.items():
+                g_lat, g_lng = info['coords']
+                # Simple Euclidean approximation (good enough for campus scale)
+                dlat = (lat - g_lat) * 111320
+                dlng = (lng - g_lng) * 111320 * abs(math.cos(math.radians(lat)))
+                dist = math.sqrt(dlat**2 + dlng**2)
+                if dist < min_dist:
+                    min_dist = dist
+                    nearest = {'name': gate_name, 'distance_m': round(dist), 'info': info}
+
+            return nearest
+        except Exception:
+            return None
+
+    def handle_gate_query(self, user_location):
+        """Handle nearest gate / exit queries with location awareness"""
+        if not user_location:
+            return {
+                'response': "To find your nearest gate, please enable GPS or set your location first. On foot, you can use Gate 1 (main) or Gate 3. By vehicle, use Gate 2, Gate 3, or Gate 4.",
+                'action': None
+            }
+
+        nearest = self.find_nearest_gate(user_location)
+        if not nearest:
+            return {
+                'response': "I couldn't determine your nearest gate. On foot, you can use Gate 1 or Gate 3. By vehicle, use Gate 2, Gate 3, or Gate 4.",
+                'action': None
+            }
+
+        gate = nearest['name']
+        dist = nearest['distance_m']
+        info = nearest['info']
+
+        if info['pedestrian'] and info['vehicle']:
+            access = "open to both pedestrians and vehicles"
+        elif info['pedestrian']:
+            access = "for pedestrians only"
+        else:
+            access = "for vehicles only"
+
+        response = (
+            f"Your nearest gate is {gate}, about {dist}m away — {info['note']} "
+            f"On foot, you can use Gate 1 or Gate 3. By vehicle, use Gate 2, Gate 3, or Gate 4."
+        )
+
+        return {
+            'response': response,
+            'action': 'navigate',
+            'destination': gate,
+            'start': 'current'
+        }
+
     def get_memo_context(self):
         """Fetch memo contents from DB to inject into system prompt"""
         try:
@@ -325,6 +438,12 @@ Your ONLY purpose is to help with:
 - Any question answerable from the uploaded memos above
 
 Known campus locations: {building_list}
+
+Gate access rules:
+- Gate 1 (main entrance): pedestrians only, no vehicles
+- Gate 2: vehicles only, nearest to Dasmariñas Bagong Bayan
+- Gate 3 (Magdiwang Gate): open to both pedestrians and vehicles
+- Gate 4: vehicles only, nearest to PCH/COS/Admin buildings
 
 Important clarifications about specific places:
 {place_notes}

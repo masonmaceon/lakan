@@ -112,7 +112,12 @@ async function sendMessage() {
             headers: {
                 'Content-Type': 'application/json'
             },
-            body: JSON.stringify({ message: message })
+            body: JSON.stringify({
+                message: message,
+                userLocation: (window.adminMode && window.adminMode.customLocation)
+                    ? window.adminMode.customLocation
+                    : null
+            })
         });
         
         const data = await response.json();
