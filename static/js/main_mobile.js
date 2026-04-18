@@ -135,6 +135,9 @@ async function sendMessage() {
         } else if (data.action === 'show_location' && data.location) {
             lastMentionedBuilding = data.location;
             showBuildingOnMap(data.location);
+        } else if (data.action === 'ask_transport' && data.chips) {
+            // Render transport mode chips below the bot message
+            renderTransportChips(data.chips, data.nearest_gate);
         } else if (data.destination) {
             lastMentionedBuilding = data.destination;
             showNavigation(data.start || 'Gate 1', data.destination);
@@ -210,6 +213,75 @@ function removeTypingIndicator(id) {
     if (indicator) {
         indicator.remove();
     }
+}
+
+/**
+ * Render transport mode chips after a gate query
+ */
+function renderTransportChips(chips, nearestGate) {
+    const chatMessages = document.getElementById('chatMessages') || document.getElementById('chat-messages');
+    if (!chatMessages) return;
+
+    const chipRow = document.createElement('div');
+    chipRow.style.cssText = 'display:flex;gap:8px;padding:4px 0 8px 42px;flex-wrap:wrap;';
+    chipRow.id = 'transport-chips';
+
+    chips.forEach(chip => {
+        const btn = document.createElement('button');
+        btn.textContent = chip.label;
+        btn.style.cssText = `
+            background: rgba(0,99,65,0.08);
+            border: 1.5px solid rgba(0,99,65,0.3);
+            border-radius: 20px;
+            padding: 7px 16px;
+            font-size: 13px;
+            font-weight: 600;
+            color: #006341;
+            cursor: pointer;
+            transition: all 0.2s;
+        `;
+        btn.onmouseover = () => { btn.style.background = '#006341'; btn.style.color = 'white'; };
+        btn.onmouseout = () => { btn.style.background = 'rgba(0,99,65,0.08)'; btn.style.color = '#006341'; };
+
+        btn.onclick = () => {
+            // Remove chips after selection
+            const chipsEl = document.getElementById('transport-chips');
+            if (chipsEl) chipsEl.remove();
+
+            if (chip.value === 'on_foot') {
+                addMessage('user', '🚶 On foot');
+                // Find nearest pedestrian gate using location
+                const loc = (window.adminMode && window.adminMode.customLocation)
+                    ? window.adminMode.customLocation : null;
+                let pedestrianGate = 'Gate 1'; // default
+                if (loc && navigationEngine && navigationEngine.buildings) {
+                    const gates = ['Gate 1', 'Gate 3'];
+                    let minDist = Infinity;
+                    gates.forEach(g => {
+                        if (navigationEngine.buildings.has(g)) {
+                            const b = navigationEngine.buildings.get(g);
+                            const coords = b.coordinates;
+                            const dlat = (loc.lat - coords[0]) * 111320;
+                            const dlng = (loc.lng - coords[1]) * 111320 * Math.cos(coords[0] * Math.PI / 180);
+                            const dist = Math.sqrt(dlat * dlat + dlng * dlng);
+                            if (dist < minDist) { minDist = dist; pedestrianGate = g; }
+                        }
+                    });
+                }
+                addMessage('bot', `Got it! Routing you to ${pedestrianGate} — the nearest pedestrian gate.`);
+                showNavigation('Gate 1', pedestrianGate);
+            } else {
+                addMessage('user', '🚗 By vehicle');
+                addMessage('bot', `Got it! Routing you to ${nearestGate}.`);
+                showNavigation('Gate 1', nearestGate);
+            }
+        };
+
+        chipRow.appendChild(btn);
+    });
+
+    chatMessages.appendChild(chipRow);
+    chatMessages.scrollTop = chatMessages.scrollHeight;
 }
 
 /**

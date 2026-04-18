@@ -362,23 +362,33 @@ class CampusChatbot:
         dist = nearest['distance_m']
         info = nearest['info']
 
+        # Gate works for both — just route there
         if info['pedestrian'] and info['vehicle']:
-            access = "open to both pedestrians and vehicles"
-        elif info['pedestrian']:
-            access = "for pedestrians only"
-        else:
-            access = "for vehicles only"
+            return {
+                'response': f"Your nearest gate is {gate}, about {dist}m away — open to both pedestrians and vehicles. I'll show you the route!",
+                'action': 'navigate',
+                'destination': gate,
+                'start': 'Gate 1'
+            }
 
-        response = (
-            f"Your nearest gate is {gate}, about {dist}m away — {info['note']} "
-            f"On foot, you can use Gate 1 or Gate 3. By vehicle, use Gate 2, Gate 3, or Gate 4."
-        )
+        # Gate is pedestrian only — route directly
+        if info['pedestrian'] and not info['vehicle']:
+            return {
+                'response': f"Your nearest gate is {gate}, about {dist}m away — pedestrians only. Routing you there now!",
+                'action': 'navigate',
+                'destination': gate,
+                'start': 'Gate 1'
+            }
 
+        # Gate is vehicles only — ask how they're traveling
         return {
-            'response': response,
-            'action': 'navigate',
-            'destination': gate,
-            'start': 'Gate 1'
+            'response': f"Your nearest gate is {gate}, about {dist}m away — vehicles only. How are you traveling?",
+            'action': 'ask_transport',
+            'nearest_gate': gate,
+            'chips': [
+                {'label': '🚶 On foot', 'value': 'on_foot'},
+                {'label': '🚗 By vehicle', 'value': 'by_vehicle'}
+            ]
         }
 
     def get_memo_context(self):
