@@ -378,7 +378,7 @@ class CampusChatbot:
             'response': response,
             'action': 'navigate',
             'destination': gate,
-            'start': 'current'
+            'start': 'Gate 1'
         }
 
     def get_memo_context(self):
