@@ -169,12 +169,9 @@
     <div id="map"></div>
 
     <!-- Cancel Navigation Button -->
-    <div id="cancelNavBtn" style="display:none;position:fixed;bottom:220px;left:50%;transform:translateX(-50%);z-index:500;background:#dc2626;color:white;border:none;padding:10px 24px;border-radius:20px;font-size:14px;font-weight:700;cursor:pointer;box-shadow:0 4px 12px rgba(0,0,0,0.3);white-space:nowrap;" onclick="window.cancelNavigation()">
+    <button id="cancelNavBtn" onclick="window.cancelNavigation()" style="display:none;position:fixed;bottom:220px;left:50%;transform:translateX(-50%);z-index:500;background:#dc2626;color:white;border:none;padding:10px 24px;border-radius:20px;font-size:14px;font-weight:700;cursor:pointer;white-space:nowrap;animation:breathe 1.8s ease-in-out infinite;">
         ✕ Cancel Navigation
-    </div>
-    <div id="cancelNavBtn" style="display:none;position:fixed;bottom:210px;left:50%;transform:translateX(-50%);z-index:500;background:#dc2626;color:white;border:none;padding:10px 24px;border-radius:20px;font-size:14px;font-weight:700;cursor:pointer;box-shadow:0 4px 12px rgba(0,0,0,0.3);" onclick="cancelNavigation()">
-    ✕ Cancel Navigation
-    </div>
+    </button>
 
     <div class="chatbot-container" id="chatbotContainer">
         <div class="chatbot-header" onclick="document.getElementById('chatToggle').click()" style="cursor:pointer;">
