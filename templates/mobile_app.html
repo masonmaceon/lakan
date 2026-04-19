@@ -403,6 +403,7 @@
 
     // Global state
     let userGPSLocation = null;
+    window.userGPSLocation = null;
     let userInsideCampus = false; // false = unknown/outside, true = inside
     let gpsChecked = false;
     let isAdminLoggedIn = false;
@@ -425,6 +426,7 @@
         navigator.geolocation.getCurrentPosition(pos => {
             const {latitude: lat, longitude: lng} = pos.coords;
             userGPSLocation = {lat, lng};
+            window.userGPSLocation = {lat, lng};
             gpsChecked = true;
             userInsideCampus = isInsideCampus(lat, lng);
             dot.className = userInsideCampus ? 'gps-dot inside' : 'gps-dot outside';

@@ -116,7 +116,7 @@ async function sendMessage() {
                 message: message,
                 userLocation: (window.adminMode && window.adminMode.customLocation)
                     ? window.adminMode.customLocation
-                    : null
+                    : (window.userGPSLocation || null)
             })
         });
         
