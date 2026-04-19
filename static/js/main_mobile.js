@@ -135,6 +135,7 @@ async function sendMessage() {
         } else if (data.action === 'show_location' && data.location) {
             lastMentionedBuilding = data.location;
             showBuildingOnMap(data.location);
+            renderGetDirectionsChip(data.location);
         } else if (data.action === 'ask_transport' && data.chips) {
             // Render transport mode chips below the bot message
             renderTransportChips(data.chips, data.nearest_gate);
@@ -213,6 +214,42 @@ function removeTypingIndicator(id) {
     if (indicator) {
         indicator.remove();
     }
+}
+
+/**
+ * Render a Get Directions chip after a building is shown on the map
+ */
+function renderGetDirectionsChip(buildingId) {
+    const chatMessages = document.getElementById('chatMessages') || document.getElementById('chat-messages');
+    if (!chatMessages) return;
+
+    const chipRow = document.createElement('div');
+    chipRow.style.cssText = 'display:flex;gap:8px;padding:4px 0 8px 42px;';
+
+    const btn = document.createElement('button');
+    btn.textContent = '🗺️ Get Directions';
+    btn.style.cssText = `
+        background: #006341;
+        border: none;
+        border-radius: 20px;
+        padding: 8px 18px;
+        font-size: 13px;
+        font-weight: 600;
+        color: white;
+        cursor: pointer;
+        transition: all 0.2s;
+        box-shadow: 0 2px 8px rgba(0,99,65,0.3);
+    `;
+    btn.onmouseover = () => { btn.style.background = '#004d30'; };
+    btn.onmouseout = () => { btn.style.background = '#006341'; };
+    btn.onclick = () => {
+        chipRow.remove();
+        showNavigation('Gate 1', buildingId);
+    };
+
+    chipRow.appendChild(btn);
+    chatMessages.appendChild(chipRow);
+    chatMessages.scrollTop = chatMessages.scrollHeight;
 }
 
 /**
