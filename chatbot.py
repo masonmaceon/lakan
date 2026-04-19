@@ -313,7 +313,11 @@ class CampusChatbot:
             'nearest gate', 'closest gate', 'nearest exit', 'closest exit',
             'how do i exit', 'how to exit', 'where is the exit', 'how to leave',
             'which gate', 'what gate', 'gate near me', 'exit campus',
-            'leave campus', 'way out', 'get out'
+            'leave campus', 'way out', 'get out',
+            'where can i exit', 'where to exit', 'how to get out',
+            'exit the campus', 'leave the campus', 'go out of campus',
+            'get out of campus', 'exit from campus', 'how do i leave',
+            'where do i exit', 'which exit', 'find the exit'
         ]
         return any(k in text for k in keywords)
 
