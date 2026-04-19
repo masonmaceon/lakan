@@ -61,9 +61,9 @@ def get_db_connection():
         return None
 
 # Roboflow ML Detection Model Setup
-ROBOFLOW_API_KEY = os.getenv('ROBOFLOW_API_KEY', 'a7egLGQSh1aNH2WQs2xC')
+ROBOFLOW_API_KEY = os.getenv('ROBOFLOW_API_KEY', 'usYcCGAW2Ua9fnamEyLf')
 os.environ['ROBOFLOW_API_KEY'] = ROBOFLOW_API_KEY
-MODEL_ID = "lakan-okc8g/7"
+MODEL_ID = "lakan-5ugrp/1"
 
 print("✅ Roboflow HTTP API ready")
 
@@ -502,7 +502,6 @@ def chat():
     try:
         data = request.get_json()
         message = data.get('message', '')
-        user_location = data.get('userLocation', None)
         
         if not chatbot:
             return jsonify({
@@ -510,7 +509,7 @@ def chat():
                 'destination': None
             })
         
-        response = chatbot.get_response(message, user_location=user_location)
+        response = chatbot.get_response(message)
         return jsonify(response)
         
     except Exception as e:
