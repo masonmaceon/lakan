@@ -21,7 +21,7 @@
             backdrop-filter:blur(6px);
             z-index:99999;
             display:flex; align-items:center; justify-content:center;
-            padding:24px;
+            padding:16px;
             animation:fadeIn 0.35s ease;
             font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
         }
@@ -38,9 +38,9 @@
                 linear-gradient(135deg, #2b1d13, #1a120c);
 
             border-radius: 24px;
-            padding: 36px 28px;
+            padding: 22px 20px;
 
-            max-width: 380px;
+            max-width: 360px;
             width: 100%;
             text-align: center;
 
@@ -68,10 +68,10 @@
         }
         .modal-input:focus{border-color:#006341}
         .modal-btn{
-            width:100%;padding:14px;
+            width:100%;padding:11px;
             background:linear-gradient(135deg,#006341,#004d32);
             color:white;border:none;border-radius:12px;
-            font-size:16px;font-weight:700;cursor:pointer;
+            font-size:14px;font-weight:700;cursor:pointer;
             font-family:inherit;transition:transform 0.15s;margin-top:4px;display:block;
         }
         .modal-btn:active{transform:scale(0.98)}
@@ -95,9 +95,9 @@
             -webkit-backdrop-filter: blur(8px);
 
             border-radius:10px;
-            padding:12px 14px;
-            margin-bottom:16px;
-            font-size:13px;
+            padding:9px 12px;
+            margin-bottom:12px;
+            font-size:12px;
 
             color:#e6f4ee;
             text-align:left;
@@ -115,8 +115,8 @@
             -webkit-backdrop-filter: blur(8px);
 
             border-radius:12px;
-            padding:14px 16px;
-            margin-bottom:20px;
+            padding:10px 12px;
+            margin-bottom:14px;
             text-align:left;
         }
 
@@ -131,9 +131,9 @@
         }
 
         .how-box div{
-            font-size:13px;
+            font-size:12px;
             color:rgba(230, 244, 238, 0.9);
-            line-height:1.9
+            line-height:1.7
         }
         /* Admin upload button - hidden by default */
         #uploadMemoBtn { display: none; }
@@ -287,7 +287,7 @@
     <!-- ===== WELCOME MODAL ===== -->
     <div id="welcomeModal" class="modal-overlay">
         <div class="modal-box">
-            <div style="margin-bottom:8px"><img src="{{ url_for('static', filename='images/LAKAN_logo.png') }}" style="width:80px;height:80px;object-fit:contain;mix-blend-mode:screen;"></div>            <h1>Lakán</h1>
+            <div style="margin-bottom:8px"><img src="{{ url_for('static', filename='images/LAKAN_logo.png') }}" style="width:60px;height:60px;object-fit:contain;mix-blend-mode:screen;"></div>            <h1>Lakán</h1>
             <p class="subtitle">DLSU-Dasmariñas Campus Navigator</p>
 
             <div class="how-box">
@@ -306,15 +306,15 @@
                 <span id="gpsText">Tap "Enable GPS" to detect your location</span>
             </div>
 
-            <div style="margin-bottom:16px;text-align:left">
-                <label style="font-size:13px;font-weight:600;color:rgba(230,244,238,0.9);display:block;margin-bottom:6px">Your name</label>
+            <div style="margin-bottom:10px;text-align:left">
+                <label style="font-size:12px;font-weight:600;color:rgba(230,244,238,0.9);display:block;margin-bottom:4px">Your name</label>
                 <input id="welcomeNameInput" type="text" placeholder="e.g. Juan dela Cruz" class="modal-input"
                     onkeypress="if(event.key==='Enter') startApp()" style="margin-bottom:0">
             </div>
 
             <button onclick="enableGPS()" class="modal-btn" id="gpsBtn" style="background:transparent;border:2px solid #006341;color:#4ade80;">📍 Enable GPS</button>
-            <button onclick="startApp()" class="modal-btn" style="margin-top:10px">Start Navigating →</button>
-            <p style="font-size:11px;color:#9ca3af;margin:14px 0 0">Animo La Salle! 💚</p>
+            <button onclick="startApp()" class="modal-btn" style="margin-top:8px">Start Navigating →</button>
+            <p style="font-size:11px;color:#9ca3af;margin:8px 0 0">Animo La Salle! 💚</p>
         </div>
     </div>
 
