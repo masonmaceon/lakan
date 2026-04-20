@@ -23,13 +23,17 @@ class CampusMapController {
         // Create new map
         this.map = L.map(this.mapElementId, { tap: false }).setView(centerCoords, zoom);
         
-        // Add tile layer
+        // Add tile layer - non-interactive to prevent mobile tap popups
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
             attribution: '© OpenStreetMap contributors',
-            maxZoom: 19
+            maxZoom: 19,
+            interactive: false
         }).addTo(this.map);
 
         window.map = this.map;
+
+        // Close any popups when map is tapped (mobile fix)
+        this.map.on('click', () => this.map.closePopup());
 
         console.log("Map initialized");
         return this.map;
