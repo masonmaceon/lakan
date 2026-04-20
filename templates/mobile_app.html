@@ -471,18 +471,38 @@
                         : `Hi! I'm Lakán. Ask me "How do I get to MLH?" or upload an image of a building.`;
                     window.mobileApp.addMessage('bot', msg);
                     if (userGPSLocation) {
-                        // Enable admin mode so GPS is used as start
                         const trySetLocation = () => {
                             if (window.adminMode) {
                                 window.adminMode.customLocation = userGPSLocation;
                                 window.adminMode.enabled = true;
-                                // Start continuous GPS tracking for moving YOU marker
                                 if (window.mobileApp && window.mobileApp.getMapController()) {
-                                    window.mobileApp.getMapController().startTracking();
+                                    const mc = window.mobileApp.getMapController();
+                                    mc.startTracking();
+                                    // Zoom based on campus status
+                                    if (userInsideCampus) {
+                                        // Fly to YOU marker
+                                        window.map.flyTo([userGPSLocation.lat, userGPSLocation.lng], 19, { animate: true, duration: 1 });
+                                    } else {
+                                        // Fit to DLSU-D campus bounds so they can see where to go
+                                        window.map.fitBounds([
+                                            [14.3188, 120.9558],
+                                            [14.3295, 120.9650]
+                                        ], { padding: [30, 30], animate: true });
+                                    }
                                 }
                             } else setTimeout(trySetLocation, 200);
                         };
                         trySetLocation();
+                    } else {
+                        // No GPS — just fit to campus
+                        setTimeout(() => {
+                            if (window.map) {
+                                window.map.fitBounds([
+                                    [14.3188, 120.9558],
+                                    [14.3295, 120.9650]
+                                ], { padding: [30, 30], animate: true });
+                            }
+                        }, 400);
                     }
                 } else setTimeout(greet, 100);
             };
