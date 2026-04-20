@@ -174,7 +174,7 @@
     </button>
 
     <div class="chatbot-container" id="chatbotContainer">
-        <div class="chatbot-header" onclick="document.getElementById('chatToggle').click()" style="cursor:pointer;">
+        <div class="chatbot-header" id="chatbotHeader" style="cursor:pointer;">
             <div class="chatbot-title">
                 <i class="fas fa-robot"></i>
                 <span>Ask Lakán</span>
@@ -711,6 +711,21 @@
     // Load announcements once app is ready
     document.addEventListener('DOMContentLoaded', () => {
         setTimeout(loadAnnouncements, 1500);
+
+        // Fix chatbot header toggle for mobile touch
+        const chatbotHeader = document.getElementById('chatbotHeader');
+        if (chatbotHeader) {
+            let lastTouch = 0;
+            const doToggle = (e) => {
+                e.preventDefault();
+                const now = Date.now();
+                if (now - lastTouch < 300) return; // debounce
+                lastTouch = now;
+                document.getElementById('chatToggle').click();
+            };
+            chatbotHeader.addEventListener('touchend', doToggle, { passive: false });
+            chatbotHeader.addEventListener('click', doToggle);
+        }
     });
     </script>
 

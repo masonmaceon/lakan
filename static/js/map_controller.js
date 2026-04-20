@@ -214,17 +214,24 @@ class CampusMapController {
         this.clearRoute();
 
         const marker = L.marker(coordinates, {
-            icon: this.createCustomIcon('📍', '#3b82f6')
+            icon: L.divIcon({
+                className: 'custom-marker',
+                html: `<div style="
+                    background: #006341;
+                    color: white;
+                    padding: 4px 10px;
+                    border-radius: 6px;
+                    font-size: 12px;
+                    font-weight: bold;
+                    white-space: nowrap;
+                    box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+                ">📍 ${name}</div>`,
+                iconSize: [120, 28],
+                iconAnchor: [60, 28]
+            })
         }).addTo(this.map);
 
-        marker.bindPopup(`
-            <div class="route-popup">
-                <h3>${name}</h3>
-                ${description ? `<p>${description}</p>` : ''}
-            </div>
-        `).openPopup();
-
-        this.map.setView(coordinates, 18);
+        this.map.flyTo(coordinates, 18, { animate: true, duration: 0.8 });
         this.activeMarkers.push(marker);
     }
 
