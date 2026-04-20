@@ -56,6 +56,14 @@ class CampusChatbot:
             'cafeteria': 'Square',
             'canteen': 'Square',
             'food court': 'Square',
+            'gate 1': 'Gate 1',
+            'gate 2': 'Gate 2',
+            'gate 3': 'Gate 3',
+            'gate 4': 'Gate 4',
+            'gate1': 'Gate 1',
+            'gate2': 'Gate 2',
+            'gate3': 'Gate 3',
+            'gate4': 'Gate 4',
         }
         
         # Auto-generate from building data
@@ -217,10 +225,11 @@ class CampusChatbot:
         # Direction/navigation keywords (more variations)
         direction_keywords = [
             'how do i get', 'how to get', 'how can i get', 'how do i go',
-            'directions to', 'navigate to', 'route to', 
+            'directions to', 'navigate to', 'route to',
             'take me to', 'guide me to', 'show me the way', 'show me how',
             'i want to go to', 'i need to go to', 'going to',
-            'walk to', 'get to'
+            'walk to', 'get to', 'how to go to', 'how do i go to',
+            'lead me to', 'bring me to', 'path to', 'way to'
         ]
         
         # Location query keywords
