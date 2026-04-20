@@ -21,7 +21,7 @@ class CampusMapController {
         }
 
         // Create new map
-        this.map = L.map(this.mapElementId).setView(centerCoords, zoom);
+        this.map = L.map(this.mapElementId, { tap: false }).setView(centerCoords, zoom);
         
         // Add tile layer
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
