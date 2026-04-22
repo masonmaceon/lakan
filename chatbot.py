@@ -64,6 +64,12 @@ class CampusChatbot:
             'gate2': 'Gate 2',
             'gate3': 'Gate 3',
             'gate4': 'Gate 4',
+            'chapel': 'Chapel',
+            'church': 'Chapel',
+            'the chapel': 'Chapel',
+            'the church': 'Chapel',
+            'dlsu chapel': 'Chapel',
+            'university chapel': 'Chapel',
         }
         
         # Auto-generate from building data
@@ -103,114 +109,122 @@ class CampusChatbot:
     
     def get_response(self, user_input, context="", conversation=[], user_location=None):
         """Main entry point - get chatbot response"""
-        user_input_lower = user_input.lower()
-        # Strip generic suffixes so "CTHM building" matches "CTHM"
-        import re
-        user_input_lower = re.sub(r'\b(building|hall|center|centre|complex|annex|block|wing)\b', '', user_input_lower).strip()
+        try:
+            user_input_lower = user_input.lower().strip()
+            # Strip generic suffixes so "CTHM building" matches "CTHM"
+            user_input_lower = re.sub(r'\b(building|hall|center|centre|complex|annex|block|wing)\b', '', user_input_lower).strip()
 
-        # Inject location context if available
-        location_context = ""
-        if user_location:
-            nearest = self.find_nearest_gate(user_location)
-            if nearest:
-                location_context = f"\nUser's current location: lat={user_location.get('lat')}, lng={user_location.get('lng')}. Nearest gate to user: {nearest['name']} ({nearest['distance_m']}m away)."
+            # Inject location context if available
+            location_context = ""
+            if user_location:
+                nearest = self.find_nearest_gate(user_location)
+                if nearest:
+                    location_context = f"\nUser's current location: lat={user_location.get('lat')}, lng={user_location.get('lng')}. Nearest gate to user: {nearest['name']} ({nearest['distance_m']}m away)."
 
-        # Check for nearest gate intent - handle directly with location awareness
-        if self.is_gate_query(user_input_lower):
-            return self.handle_gate_query(user_location)
-        
-        # 1. Check for greetings
-        if self.is_greeting(user_input_lower):
-            return {
-                'response': random.choice([
-                    "Hello! I'm Lakán, your DLSU-D navigation assistant. Ask me how to get somewhere!",
-                    "Hi there! Need directions around campus? Just ask!",
-                    "Greetings! Where would you like to go today?"
-                ]),
-                'action': None
-            }
-        
-        # 2. Check for farewells
-        if self.is_farewell(user_input_lower):
-            return {
-                'response': "Safe travels! Feel free to ask if you need directions again. Animo La Salle!",
-                'action': None
-            }
-        
-        # 3. Detect navigation intent
-        nav_intent = self.detect_navigation_intent(user_input_lower)
-        
-        if nav_intent['is_navigation']:
-            # Extract locations
-            locations = self.extract_locations(user_input_lower)
+            # Check for nearest gate intent - handle directly with location awareness
+            if self.is_gate_query(user_input_lower):
+                return self.handle_gate_query(user_location)
             
-            # Buildings known to be disconnected from pathways
-            disconnected_buildings = []
+            # 1. Check for greetings
+            if self.is_greeting(user_input_lower):
+                return {
+                    'response': random.choice([
+                        "Hello! I'm Lakán, your DLSU-D navigation assistant. Ask me how to get somewhere!",
+                        "Hi there! Need directions around campus? Just ask!",
+                        "Greetings! Where would you like to go today?"
+                    ]),
+                    'action': None
+                }
             
-            if nav_intent['type'] == 'directions' and locations:
-                if len(locations) >= 2:
-                    # Check if destination is disconnected
-                    if locations[1] in disconnected_buildings:
+            # 2. Check for farewells
+            if self.is_farewell(user_input_lower):
+                return {
+                    'response': "Safe travels! Feel free to ask if you need directions again. Animo La Salle!",
+                    'action': None
+                }
+            
+            # 3. Detect navigation intent
+            nav_intent = self.detect_navigation_intent(user_input_lower)
+            
+            if nav_intent['is_navigation']:
+                # Extract locations
+                locations = self.extract_locations(user_input_lower)
+                
+                # Buildings known to be disconnected from pathways
+                disconnected_buildings = []
+                
+                if nav_intent['type'] == 'directions' and locations:
+                    if len(locations) >= 2:
+                        # Check if destination is disconnected
+                        if locations[1] in disconnected_buildings:
+                            building_info = self.get_building_info(locations[1])
+                            building_name = building_info['name'] if building_info else locations[1]
+                            return {
+                                'response': f"📍 {building_name} is shown on the map, but it's not connected to our pathway system yet. I can show you its location, but can't provide turn-by-turn directions.",
+                                'action': 'show_location',
+                                'location': locations[1]
+                            }
+                        
+                        # User specified both start and destination
                         building_info = self.get_building_info(locations[1])
                         building_name = building_info['name'] if building_info else locations[1]
                         return {
-                            'response': f"📍 {building_name} is shown on the map, but it's not connected to our pathway system yet. I can show you its location, but can't provide turn-by-turn directions.",
-                            'action': 'show_location',
-                            'location': locations[1]
+                            'response': f"🗺️ Showing route from {locations[0]} to {building_name}. Follow the green path!",
+                            'action': 'navigate',
+                            'start': locations[0],
+                            'destination': locations[1]
                         }
-                    
-                    # User specified both start and destination
-                    building_info = self.get_building_info(locations[1])
-                    building_name = building_info['name'] if building_info else locations[1]
-                    return {
-                        'response': f"🗺️ Showing route from {locations[0]} to {building_name}. Follow the green path!",
-                        'action': 'navigate',
-                        'start': locations[0],
-                        'destination': locations[1]
-                    }
-                elif len(locations) == 1:
-                    # Check if destination is disconnected
-                    if locations[0] in disconnected_buildings:
+                    elif len(locations) == 1:
+                        # Check if destination is disconnected
+                        if locations[0] in disconnected_buildings:
+                            building_info = self.get_building_info(locations[0])
+                            building_name = building_info['name'] if building_info else locations[0]
+                            return {
+                                'response': f"📍 {building_name} is shown on the map, but it's not connected to our pathway system yet. You'll need to navigate there manually once you're on campus.",
+                                'action': 'show_location',
+                                'location': locations[0]
+                            }
+                        
+                        # Only destination specified - use Gate 1 as default start
                         building_info = self.get_building_info(locations[0])
                         building_name = building_info['name'] if building_info else locations[0]
                         return {
-                            'response': f"📍 {building_name} is shown on the map, but it's not connected to our pathway system yet. You'll need to navigate there manually once you're on campus.",
-                            'action': 'show_location',
-                            'location': locations[0]
+                            'response': f"🗺️ Showing route to {building_name}. Follow the green path!",                        'action': 'navigate',
+                            'start': 'Gate 1',
+                            'destination': locations[0]
                         }
-                    
-                    # Only destination specified - use Gate 1 as default start
-                    building_info = self.get_building_info(locations[0])
-                    building_name = building_info['name'] if building_info else locations[0]
-                    return {
-                        'response': f"🗺️ Showing route to {building_name}. Follow the green path!",                        'action': 'navigate',
-                        'start': 'Gate 1',
-                        'destination': locations[0]
-                    }
-            
-            elif nav_intent['type'] == 'location_query' and locations:
-                building_id = locations[0]
-                building_info = self.get_building_info(building_id)
                 
-                if building_info:
-                    if building_id in disconnected_buildings:
+                elif nav_intent['type'] == 'location_query' and locations:
+                    building_id = locations[0]
+                    building_info = self.get_building_info(building_id)
+                    
+                    if building_info:
+                        if building_id in disconnected_buildings:
+                            return {
+                                'response': f"📍 {building_info['name']} is shown on the map. Note: This building isn't connected to our pathway system yet.",
+                                'action': 'show_location',
+                                'location': building_id
+                            }
                         return {
-                            'response': f"📍 {building_info['name']} is shown on the map. Note: This building isn't connected to our pathway system yet.",
+                            'response': f"📍 {building_info['name']} is shown on the map. Want directions? Ask 'How do I get to {building_id}?'",
                             'action': 'show_location',
                             'location': building_id
                         }
-                    return {
-                        'response': f"📍 {building_info['name']} is shown on the map. Want directions? Ask 'How do I get to {building_id}?'",
-                        'action': 'show_location',
-                        'location': building_id
-                    }
-        
-        # 4. Use DeepSeek for general queries
-        if self.deepseek_enabled:
-            return self.query_deepseek(user_input, context + location_context, conversation)
-        else:
+            
+            # 4. Use DeepSeek for general queries
+            if self.deepseek_enabled:
+                return self.query_deepseek(user_input, context + location_context, conversation)
+            else:
+                return {
+                    'response': "I'm not sure how to help with that. Try asking 'How do I get to JFH?' or 'Where is the library?'",
+                    'action': None
+                }
+        except Exception as e:
+            print(f"❌ Chatbot error: {e}")
+            import traceback
+            traceback.print_exc()
             return {
-                'response': "I'm not sure how to help with that. Try asking 'How do I get to JFH?' or 'Where is the library?'",
+                'response': "Sorry, I ran into an issue processing your request. Please try again.",
                 'action': None
             }
     
