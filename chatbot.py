@@ -202,19 +202,19 @@ class CampusChatbot:
                     if locations:
                         building_id = locations[0]
                         building_info = self.get_building_info(building_id)
-                        
-                        if building_info:
-                            if building_id in disconnected_buildings:
-                                return {
-                                    'response': f"📍 {building_info['name']} is shown on the map. Note: This building isn't connected to our pathway system yet.",
-                                    'action': 'show_location',
-                                    'location': building_id
-                                }
+                        building_name = building_info['name'] if building_info else building_id
+
+                        if building_id in disconnected_buildings:
                             return {
-                                'response': f"📍 {building_info['name']} is shown on the map. Want directions? Ask 'How do I get to {building_id}?'",
+                                'response': f"📍 {building_name} is shown on the map. Note: This building isn't connected to our pathway system yet.",
                                 'action': 'show_location',
                                 'location': building_id
                             }
+                        return {
+                            'response': f"📍 {building_name} is shown on the map. Want directions? Ask 'How do I get to {building_id}?'",
+                            'action': 'show_location',
+                            'location': building_id
+                        }
             
             # 4. Use DeepSeek for general queries
             if self.deepseek_enabled:
