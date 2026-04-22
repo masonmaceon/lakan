@@ -194,22 +194,27 @@ class CampusChatbot:
                             'destination': locations[0]
                         }
                 
-                elif nav_intent['type'] == 'location_query' and locations:
-                    building_id = locations[0]
-                    building_info = self.get_building_info(building_id)
+                elif nav_intent['type'] == 'location_query':
+                    # If locations empty, retry on original unsanitized input
+                    if not locations:
+                        locations = self.extract_locations(user_input.lower().strip())
                     
-                    if building_info:
-                        if building_id in disconnected_buildings:
+                    if locations:
+                        building_id = locations[0]
+                        building_info = self.get_building_info(building_id)
+                        
+                        if building_info:
+                            if building_id in disconnected_buildings:
+                                return {
+                                    'response': f"📍 {building_info['name']} is shown on the map. Note: This building isn't connected to our pathway system yet.",
+                                    'action': 'show_location',
+                                    'location': building_id
+                                }
                             return {
-                                'response': f"📍 {building_info['name']} is shown on the map. Note: This building isn't connected to our pathway system yet.",
+                                'response': f"📍 {building_info['name']} is shown on the map. Want directions? Ask 'How do I get to {building_id}?'",
                                 'action': 'show_location',
                                 'location': building_id
                             }
-                        return {
-                            'response': f"📍 {building_info['name']} is shown on the map. Want directions? Ask 'How do I get to {building_id}?'",
-                            'action': 'show_location',
-                            'location': building_id
-                        }
             
             # 4. Use DeepSeek for general queries
             if self.deepseek_enabled:
