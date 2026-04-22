@@ -238,9 +238,18 @@
             </div>
             <div class="modal-body">
                 <div class="camera-upload-area" id="uploadArea">
-                    <i class="fas fa-cloud-upload-alt"></i>
-                    <p>Tap to take photo or upload image</p>
-                    <input type="file" id="buildingImage" accept="image/*">
+                    <i class="fas fa-camera"></i>
+                    <p>Identify a campus building</p>
+                    <div style="display:flex;gap:10px;margin-top:12px;justify-content:center;">
+                        <label for="buildingImageCamera" style="background:#006341;color:white;padding:9px 18px;border-radius:10px;font-size:13px;font-weight:600;cursor:pointer;display:flex;align-items:center;gap:6px;">
+                            📷 Take Photo
+                        </label>
+                        <label for="buildingImage" style="background:rgba(0,99,65,0.1);color:#006341;border:1.5px solid #006341;padding:9px 18px;border-radius:10px;font-size:13px;font-weight:600;cursor:pointer;display:flex;align-items:center;gap:6px;">
+                            🖼️ Upload
+                        </label>
+                    </div>
+                    <input type="file" id="buildingImageCamera" accept="image/*" capture="environment" style="display:none">
+                    <input type="file" id="buildingImage" accept="image/*" style="display:none">
                 </div>
                 <div class="camera-preview" id="previewArea" style="display:none">
                     <img id="previewImage" src="" alt="Preview">

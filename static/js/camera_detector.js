@@ -31,10 +31,18 @@ class CameraDetector {
             this.closeModal();
         });
         
-        // File input change
+        // File input change (gallery)
         this.fileInput.addEventListener('change', (e) => {
             this.handleFileSelect(e);
         });
+
+        // Camera input change
+        const cameraInput = document.getElementById('buildingImageCamera');
+        if (cameraInput) {
+            cameraInput.addEventListener('change', (e) => {
+                this.handleFileSelect(e);
+            });
+        }
         
         // Identify button
         document.getElementById('identifyBtn').addEventListener('click', () => {
@@ -84,6 +92,8 @@ class CameraDetector {
         this.loadingArea.style.display = 'none';
         this.resultArea.style.display = 'none';
         this.fileInput.value = '';
+        const cameraInput = document.getElementById('buildingImageCamera');
+        if (cameraInput) cameraInput.value = '';
         this.selectedFile = null;
     }
     
