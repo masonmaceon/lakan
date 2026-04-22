@@ -83,8 +83,12 @@ class CampusChatbot:
                 
                 # Add each word from the name
                 words = building_name.lower().split()
+                # Skip generic words that would cause wrong matches
+                stopwords = {'building', 'hall', 'center', 'centre', 'the', 'and',
+                             'of', 'for', 'college', 'department', 'office', 'room',
+                             'complex', 'area', 'block', 'annex', 'wing', 'unit'}
                 for word in words:
-                    if len(word) > 3:  # Only meaningful words
+                    if len(word) > 3 and word not in stopwords:
                         # Don't overwrite if already exists
                         if word not in self.building_mappings:
                             self.building_mappings[word] = building_id
@@ -100,6 +104,9 @@ class CampusChatbot:
     def get_response(self, user_input, context="", conversation=[], user_location=None):
         """Main entry point - get chatbot response"""
         user_input_lower = user_input.lower()
+        # Strip generic suffixes so "CTHM building" matches "CTHM"
+        import re
+        user_input_lower = re.sub(r'\b(building|hall|center|centre|complex|annex|block|wing)\b', '', user_input_lower).strip()
 
         # Inject location context if available
         location_context = ""
