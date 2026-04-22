@@ -277,7 +277,22 @@ class CampusNavigationEngine {
     }
 
     // Dijkstra's algorithm for shortest path
+    normalizeBuildingId(locationId) {
+        if (!locationId) return locationId;
+        // If exact match exists, use it
+        if (this.buildings.has(locationId)) return locationId;
+        // Try case-insensitive match
+        for (const [key] of this.buildings) {
+            if (key.toLowerCase() === locationId.toLowerCase()) return key;
+        }
+        // No match found — return original and let caller handle it
+        return locationId;
+    }
+
     findShortestPath(startLocation, endLocation, preferences = {}) {
+        // Normalize building IDs to handle case mismatches (e.g. CHAPEL vs Chapel)
+        startLocation = this.normalizeBuildingId(startLocation);
+        endLocation = this.normalizeBuildingId(endLocation);
         console.log(`🎯 Finding path: ${startLocation} → ${endLocation}`);
         
         let startNodeId, endNodeId;
