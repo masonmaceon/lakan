@@ -90,7 +90,7 @@ class CampusChatbot:
                 # Add each word from the name
                 words = building_name.lower().split()
                 # Skip generic words that would cause wrong matches
-                stopwords = {'building', 'hall', 'center', 'centre', 'the', 'and',
+                stopwords = {'building', 'center', 'centre', 'the', 'and',
                              'of', 'for', 'college', 'department', 'office', 'room',
                              'complex', 'area', 'block', 'annex', 'wing', 'unit'}
                 for word in words:
@@ -112,7 +112,7 @@ class CampusChatbot:
         try:
             user_input_lower = user_input.lower().strip()
             # Strip generic suffixes so "CTHM building" matches "CTHM"
-            user_input_lower = re.sub(r'\b(building|hall|center|centre|complex|annex|block|wing)\b', '', user_input_lower).strip()
+            user_input_lower = re.sub(r'\b(building|center|centre|complex|annex|wing)\b', '', user_input_lower).strip()
 
             # Inject location context if available
             location_context = ""
