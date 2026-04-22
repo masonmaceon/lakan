@@ -47,10 +47,16 @@ class CameraDetector {
             const id = this.lastDetectedBuilding;
             this.closeModal();
             if (id && window.mobileApp) {
+                // Open chat panel if it's minimized
+                const chatbotContainer = document.getElementById('chatbotContainer');
+                const chatToggle = document.getElementById('chatToggle');
+                if (chatbotContainer && chatbotContainer.classList.contains('minimized')) {
+                    if (chatToggle) chatToggle.click();
+                }
                 setTimeout(() => {
-            window.mobileApp.addMessage('bot',
-            'I identified that as <strong>' + name + '</strong>. Would you like me to navigate you there? <br><br><button onclick="window.showNavigation(\'Gate 1\',\'' + id + '\');this.parentElement.parentElement.innerHTML=\'✅ Navigating to ' + name + '...\';" style="background:#006341;color:white;border:none;padding:8px 16px;border-radius:8px;cursor:pointer;font-size:13px;margin-top:4px;">Yes, take me there!</button>');
-            }, 300);
+                    window.mobileApp.addMessage('bot',
+                    'I identified that as <strong>' + name + '</strong>. Would you like me to navigate you there? <br><br><button onclick="window.showNavigation(\'Gate 1\',\'' + id + '\');this.parentElement.parentElement.innerHTML=\'✅ Navigating to ' + name + '...\';" style="background:#006341;color:white;border:none;padding:8px 16px;border-radius:8px;cursor:pointer;font-size:13px;margin-top:4px;">Yes, take me there!</button>');
+                }, 300);
             }
         });
         
@@ -152,6 +158,7 @@ class CameraDetector {
             'CBAA': 'CBAA',
             'CTH': 'CTH',
             'CTHM': 'CTHM',
+            'CHAPEL': 'Chapel',
             'bad': null
         };
         
