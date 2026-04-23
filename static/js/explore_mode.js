@@ -152,7 +152,7 @@ function plotBuilding(building) {
     const displayName = FULL_NAMES[building.id] || building.name || building.id;
     const shortName = building.id.length <= 5
         ? building.id
-        : (displayName.length > 16 ? displayName.substring(0, 14) + '…' : displayName);
+        : (displayName.length > 12 ? displayName.substring(0, 11) + '…' : displayName);
 
     const icon = L.divIcon({
         className: '',
@@ -221,24 +221,27 @@ function injectStyles() {
     const style = document.createElement('style');
     style.textContent = `
         .explore-pin {
-            background: #006341;
+            background: rgba(0, 60, 35, 0.92);
             color: white;
-            padding: 4px 9px;
-            border-radius: 6px;
-            font-size: 10.5px;
+            padding: 5px 10px;
+            border-radius: 8px;
+            font-size: 11px;
             font-weight: 700;
-            white-space: normal;
-            max-width: 120px;
+            white-space: nowrap;
+            max-width: 140px;
+            overflow: hidden;
+            text-overflow: ellipsis;
             text-align: center;
-            line-height: 1.3;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.35);
+            line-height: 1.4;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.5);
             cursor: pointer;
-            border: 1.5px solid rgba(255,255,255,0.25);
+            border: 1.5px solid rgba(255,255,255,0.3);
+            backdrop-filter: blur(2px);
             transition: transform 0.15s, background 0.15s;
         }
         .explore-pin:hover {
-            background: #004d30;
-            transform: scale(1.06);
+            background: #006341;
+            transform: scale(1.08);
         }
 
         #exploreModal {
