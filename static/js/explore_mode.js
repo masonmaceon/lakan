@@ -183,6 +183,7 @@ window.__exploreTap = function(buildingId) {
     document.getElementById('exploreModalIcon').textContent = icon;
     document.getElementById('exploreModalName').textContent = displayName;
     document.getElementById('exploreModalDesc').textContent = desc;
+    document.getElementById('exploreNavBtn').dataset.buildingId = buildingId;
     document.getElementById('exploreModal').style.display = 'flex';
 
     // Fly to building
@@ -197,20 +198,21 @@ function closeExploreModal() {
 
 // ── NAVIGATE ─────────────────────────────────────────────────
 function exploreNavigate() {
-    if (!currentBuilding) return;
-    closeExploreModal();
-    exitExploreMode(); // auto-close explore mode
+    const btn = document.getElementById('exploreNavBtn');
+    const buildingId = btn ? btn.dataset.buildingId : null;
+    if (!buildingId) return;
 
-    // Use actual GPS location if available, fallback to Gate 1
+    closeExploreModal();
+    exitExploreMode();
+
     const hasGPS = window.userGPSLocation || (window.adminMode && window.adminMode.customLocation);
-    
     if (hasGPS && window.adminMode) {
         window.adminMode.customLocation = window.userGPSLocation || window.adminMode.customLocation;
         window.adminMode.enabled = true;
     }
 
     if (window.showNavigation) {
-        window.showNavigation('Gate 1', currentBuilding.id);
+        window.showNavigation('Gate 1', buildingId);
     }
 }
 
@@ -329,7 +331,7 @@ function injectModal() {
             <div class="explore-modal-name" id="exploreModalName">Building</div>
             <div class="explore-modal-desc" id="exploreModalDesc"></div>
             <div class="explore-modal-btns">
-                <button class="explore-btn-nav" onclick="window.__exploreNavigate()">
+                <button class="explore-btn-nav" id="exploreNavBtn" onclick="window.__exploreNavigate()">
                     🗺️ Navigate Here
                 </button>
                 <button class="explore-btn-close" onclick="window.__exploreClose()">✕ Close</button>
