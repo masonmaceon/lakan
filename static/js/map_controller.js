@@ -21,8 +21,8 @@ class CampusMapController {
         }
 
         // Create new map
-        this.map = L.map(this.mapElementId, { tap: false }).setView(centerCoords, zoom);    
-
+        this.map = L.map(this.mapElementId, { tap: false }).setView(centerCoords, zoom);
+        
         // Add tile layer - non-interactive to prevent mobile tap popups
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
             attribution: '© OpenStreetMap contributors',
@@ -31,7 +31,6 @@ class CampusMapController {
         }).addTo(this.map);
 
         window.map = this.map;
-        this.map.on('click', () => this.map.closePopup());
 
         // Close any popups when map is tapped (mobile fix)
         this.map.on('click', () => this.map.closePopup());
@@ -226,13 +225,16 @@ class CampusMapController {
                     color: white;
                     padding: 4px 10px;
                     border-radius: 6px;
-                    font-size: 12px;
+                    font-size: 11px;
                     font-weight: bold;
-                    white-space: nowrap;
+                    white-space: normal;
+                    max-width: 140px;
+                    text-align: center;
+                    line-height: 1.3;
                     box-shadow: 0 2px 6px rgba(0,0,0,0.3);
                 ">📍 ${name}</div>`,
-                iconSize: [120, 28],
-                iconAnchor: [60, 28]
+                iconSize: [140, 'auto'],
+                iconAnchor: [70, 28]
             })
         }).addTo(this.map);
 
