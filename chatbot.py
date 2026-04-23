@@ -70,6 +70,10 @@ class CampusChatbot:
             'the church': 'Chapel',
             'dlsu chapel': 'Chapel',
             'university chapel': 'Chapel',
+            'uls': 'ULS',
+            'ugnayang la salle': 'ULS',
+            'ugnayang': 'ULS',
+            'la salle annex': 'ULS',
         }
         
         # Auto-generate from building data
@@ -151,7 +155,7 @@ class CampusChatbot:
                 locations = self.extract_locations(user_input_lower)
                 
                 # Buildings known to be disconnected from pathways
-                disconnected_buildings = []
+                disconnected_buildings = ['ULS']
                 
                 if nav_intent['type'] == 'directions' and locations:
                     if len(locations) >= 2:
