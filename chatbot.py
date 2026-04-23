@@ -311,10 +311,29 @@ class CampusChatbot:
     
     def get_building_info(self, building_id):
         """Get building information"""
+        # Full name overrides for display on map pins
+        full_names = {
+            'JFH': 'Jose Fernandez Hall',
+            'MLH': 'Maria Salome Llanera Hall',
+            'CBAA': 'College of Business Administration and Accountancy',
+            'CEAT': 'College of Engineering, Architecture and Technology',
+            'CTHM': 'College of Tourism and Hospitality Management',
+            'CTH': 'Candido Tirona Hall',
+            'Admin': 'Ayuntamiento de Gonzalez',
+            'Library': 'Rizal Library',
+            'Square': 'University Square',
+            'Chapel': 'Chapel',
+            'ULS': 'Ugnayang La Salle',
+            'GMH': 'Gerry M. Henares Hall',
+            'LDH': 'Ladislao Diwa Hall',
+            'PCH': 'Purificacion Borromeo Hall',
+            'SAH': 'Santiago Alvarez Hall',
+            'MTH': 'Mariano Trias Hall',
+        }
+
         for building in self.buildings:
             if building.get('id') == building_id:
-                # Get name from building data or use description
-                name = building.get('name') or building.get('name ') or self.building_info.get(building_id, building_id)
+                name = full_names.get(building_id) or building.get('name') or building.get('name ') or self.building_info.get(building_id, building_id)
                 return {
                     'id': building_id,
                     'name': name,
