@@ -244,6 +244,12 @@ function renderGetDirectionsChip(buildingId) {
     btn.onmouseout = () => { btn.style.background = '#006341'; };
     btn.onclick = () => {
         chipRow.remove();
+        // Minimize chat so user can see the full route
+        const chatbotContainer = document.getElementById('chatbotContainer');
+        if (chatbotContainer && !chatbotContainer.classList.contains('minimized')) {
+            chatbotContainer.classList.add('minimized');
+            setTimeout(() => { if (window.map) window.map.invalidateSize(); }, 350);
+        }
         showNavigation('Gate 1', buildingId);
     };
 
