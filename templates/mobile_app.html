@@ -163,6 +163,9 @@
             <button class="nav-icon" id="aboutBtn" title="About / Meet the Devs" onclick="document.getElementById('meetDevsModal').style.display='flex'">
                 <i class="fas fa-info-circle"></i>
             </button>
+            <button class="nav-icon" id="exploreModeBtn" title="Explore Campus" onclick="toggleExploreMode()">
+                <i class="fas fa-compass"></i>
+            </button>
             <button class="nav-icon" id="settingsBtn" title="Admin Login" onclick="openAdminLogin()">
                 <i class="fas fa-cog"></i>
             </button>
@@ -746,6 +749,7 @@
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script src="{{ url_for('static', filename='js/campus_navigation.js') }}?v=6"></script>
     <script src="{{ url_for('static', filename='js/map_controller.js') }}?v=3"></script>
+    <script src="{{ url_for('static', filename='js/explore_mode.js') }}?v=1"></script>
     <script src="{{ url_for('static', filename='js/admin_mode.js') }}"></script>
     <script src="{{ url_for('static', filename='js/camera_detector.js') }}?v=4"></script>
     <script src="{{ url_for('static', filename='js/main_mobile.js') }}?v=9"></script>
