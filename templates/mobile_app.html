@@ -195,7 +195,7 @@
             background: transparent;
         ">
             <div style="font-size:10px;color:#6b7280;font-weight:600;letter-spacing:0.5px;text-transform:uppercase;margin-bottom:4px;">📢 Announcements</div>
-            <div id="announcementPills" style="display:flex;gap:6px;overflow-x:auto;padding-bottom:4px;scrollbar-width:none;"></div>
+            <div id="announcementPills" style="display:flex;gap:6px;overflow-x:auto;padding-bottom:4px;scrollbar-width:none;-webkit-overflow-scrolling:touch;touch-action:pan-x;scroll-snap-type:x mandatory;"></div>
         </div>
 
         <div class="chatbot-input">
@@ -699,6 +699,7 @@
                     padding:5px 12px;font-size:12px;font-weight:600;
                     color:#006341;cursor:pointer;white-space:nowrap;
                     max-width:200px;overflow:hidden;text-overflow:ellipsis;
+                    scroll-snap-align:start;
                 `;
                 pill.textContent = '📢 ' + item.title;
                 pill.onclick = () => openAnnouncementSheet(item);
@@ -744,7 +745,7 @@
 
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script src="{{ url_for('static', filename='js/campus_navigation.js') }}?v=6"></script>
-    <script src="{{ url_for('static', filename='js/map_controller.js') }}?v=2"></script>
+    <script src="{{ url_for('static', filename='js/map_controller.js') }}?v=3"></script>
     <script src="{{ url_for('static', filename='js/admin_mode.js') }}"></script>
     <script src="{{ url_for('static', filename='js/camera_detector.js') }}?v=4"></script>
     <script src="{{ url_for('static', filename='js/main_mobile.js') }}?v=8"></script>
