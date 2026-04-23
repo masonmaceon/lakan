@@ -74,6 +74,8 @@ class CampusChatbot:
             'ugnayang la salle': 'ULS',
             'ugnayang': 'ULS',
             'la salle annex': 'ULS',
+            'grandstand': 'grandstand',
+            'dihs grandstand': 'grandstand',
         }
         
         # Auto-generate from building data
@@ -313,7 +315,8 @@ class CampusChatbot:
         """Get building information"""
         # Full name overrides for display on map pins
         full_names = {
-            'JFH': 'Jose Fernandez Hall',
+            'grandstand': 'Grandstand',
+            'JFH': 'Julian Felipe Hall',
             'MLH': 'Maria Salome Llanera Hall',
             'CBAA': 'College of Business Administration and Accountancy',
             'CEAT': 'College of Engineering, Architecture and Technology',
@@ -324,11 +327,19 @@ class CampusChatbot:
             'Square': 'University Square',
             'Chapel': 'Chapel',
             'ULS': 'Ugnayang La Salle',
-            'GMH': 'Gerry M. Henares Hall',
+            'GMH': 'Gregorio Montoya Hall',
             'LDH': 'Ladislao Diwa Hall',
-            'PCH': 'Purificacion Borromeo Hall',
+            'PCH': 'Pablo Campos Hall',
             'SAH': 'Santiago Alvarez Hall',
             'MTH': 'Mariano Trias Hall',
+            'FCH': 'Felipe Calderon Hall',
+            'VBH': 'Vito Belarmino Hall',
+            'ICTC': 'Information and Communications Technology Center',
+            'Alumni': 'Alumni Center',
+            'botanical_garden': 'Botanical Garden',
+            'ladies_dorm': 'Ladies Dormitory',
+            'mens_dorm': 'Mens Dormitory',
+            'museo': 'Museo De La Salle',
         }
 
         for building in self.buildings:
