@@ -134,7 +134,7 @@ async function sendMessage() {
             showNavigation(data.start || 'Gate 1', data.destination);
         } else if (data.action === 'show_location' && data.location) {
             lastMentionedBuilding = data.location;
-            showBuildingOnMap(data.location);
+            showBuildingOnMap(data.location, data.display_name || null);
             renderGetDirectionsChip(data.location);
         } else if (data.action === 'ask_transport' && data.chips) {
             // Render transport mode chips below the bot message
@@ -324,16 +324,16 @@ function renderTransportChips(chips, nearestGate) {
 /**
  * Focus map on a building without drawing a route
  */
-function showBuildingOnMap(buildingId) {
+function showBuildingOnMap(buildingId, displayName = null) {
     if (!navigationEngine || !mapController) return;
 
     let coords = null;
-    let name = buildingId;
+    let name = displayName || buildingId;
 
     if (navigationEngine.buildings && navigationEngine.buildings.has(buildingId)) {
         const b = navigationEngine.buildings.get(buildingId);
         coords = b.coordinates;
-        name = b.name || buildingId;
+        if (!displayName) name = b.name || buildingId;
     }
 
     if (coords) {

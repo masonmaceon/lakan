@@ -166,7 +166,8 @@ class CampusChatbot:
                             return {
                                 'response': f"📍 {building_name} is shown on the map, but it's not connected to our pathway system yet. I can show you its location, but can't provide turn-by-turn directions.",
                                 'action': 'show_location',
-                                'location': locations[1]
+                                'location': locations[1],
+                                'display_name': building_name
                             }
                         
                         # User specified both start and destination
@@ -186,7 +187,8 @@ class CampusChatbot:
                             return {
                                 'response': f"📍 {building_name} is shown on the map, but it's not connected to our pathway system yet. You'll need to navigate there manually once you're on campus.",
                                 'action': 'show_location',
-                                'location': locations[0]
+                                'location': locations[0],
+                                'display_name': building_name
                             }
                         
                         # Only destination specified - use Gate 1 as default start
@@ -212,12 +214,14 @@ class CampusChatbot:
                             return {
                                 'response': f"📍 {building_name} is shown on the map. Note: This building isn't connected to our pathway system yet.",
                                 'action': 'show_location',
-                                'location': building_id
+                                'location': building_id,
+                                'display_name': building_name
                             }
                         return {
                             'response': f"📍 {building_name} is shown on the map. Want directions? Ask 'How do I get to {building_id}?'",
                             'action': 'show_location',
-                            'location': building_id
+                            'location': building_id,
+                            'display_name': building_name
                         }
             
             # 4. Use DeepSeek for general queries
