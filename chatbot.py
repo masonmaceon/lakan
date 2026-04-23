@@ -74,8 +74,8 @@ class CampusChatbot:
             'ugnayang la salle': 'ULS',
             'ugnayang': 'ULS',
             'la salle annex': 'ULS',
-            'grandstand': 'grandstand',
-            'dihs grandstand': 'grandstand',
+            'grandstand': 'Grandstand',
+            'dihs grandstand': 'Grandstand',
         }
         
         # Auto-generate from building data
@@ -340,6 +340,8 @@ class CampusChatbot:
             'ladies_dorm': 'Ladies Dormitory',
             'mens_dorm': 'Mens Dormitory',
             'museo': 'Museo De La Salle',
+            'high_school_complex': 'High School Complex',
+            'high_school_comples': 'High School Complex',
         }
 
         for building in self.buildings:
