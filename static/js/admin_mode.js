@@ -82,13 +82,18 @@ function initAdminMode() {
 function toggleAdminPanel() {
     const body = document.getElementById('admin-panel-body');
     const btn = document.getElementById('admin-panel-collapse');
-    if (!body || !btn) return;
+    const panel = document.getElementById('admin-info-panel');
+    if (!body || !btn || !panel) return;
     if (body.style.display === 'none') {
         body.style.display = 'block';
         btn.textContent = '−';
+        panel.style.width = '220px';
+        panel.style.padding = '12px';
     } else {
         body.style.display = 'none';
         btn.textContent = '+';
+        panel.style.width = 'auto';
+        panel.style.padding = '6px 10px';
     }
 }
 
