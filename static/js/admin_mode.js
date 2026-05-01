@@ -55,14 +55,19 @@ function initAdminMode() {
         font-size: 12px;
     `;
     infoPanel.innerHTML = `
-        <div style="font-weight: bold; margin-bottom: 8px; font-size: 13px;">📍 Admin Mode</div>
-        <div style="margin-bottom: 8px;">Click map to set location</div>
-        <div id="admin-location-coords" style="font-family: monospace; background: rgba(0,0,0,0.3); padding: 4px; border-radius: 4px; font-size: 10px; margin-bottom: 8px;">
-            No location set
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
+            <div style="font-weight:bold;font-size:13px;">📍 Admin Mode</div>
+            <button id="admin-panel-collapse" onclick="toggleAdminPanel()" style="background:rgba(255,255,255,0.2);border:none;color:white;border-radius:4px;padding:2px 8px;cursor:pointer;font-size:14px;line-height:1;">−</button>
         </div>
-        <button id="admin-reset-btn" style="padding: 6px 10px; background: white; color: #006341; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; width: 100%; font-size: 11px;">
-            Reset to Gate 1
-        </button>
+        <div id="admin-panel-body">
+            <div style="margin-bottom:8px;">Click map to set location</div>
+            <div id="admin-location-coords" style="font-family:monospace;background:rgba(0,0,0,0.3);padding:4px;border-radius:4px;font-size:10px;margin-bottom:8px;">
+                No location set
+            </div>
+            <button id="admin-reset-btn" style="padding:6px 10px;background:white;color:#006341;border:none;border-radius:4px;cursor:pointer;font-weight:bold;width:100%;font-size:11px;">
+                Reset to Gate 1
+            </button>
+        </div>
     `;
     document.body.appendChild(infoPanel);
     
@@ -72,6 +77,19 @@ function initAdminMode() {
             resetBtn.onclick = resetAdminLocation;
         }
     }, 100);
+}
+
+function toggleAdminPanel() {
+    const body = document.getElementById('admin-panel-body');
+    const btn = document.getElementById('admin-panel-collapse');
+    if (!body || !btn) return;
+    if (body.style.display === 'none') {
+        body.style.display = 'block';
+        btn.textContent = '−';
+    } else {
+        body.style.display = 'none';
+        btn.textContent = '+';
+    }
 }
 
 function toggleAdminMode() {
