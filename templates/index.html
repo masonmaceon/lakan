@@ -354,11 +354,28 @@
         }
 
         .welcome-content {
-            background: white;
+            /* woody glass: warm brown tones, translucent, frosted */
+            background:
+                linear-gradient(135deg, rgba(52, 29, 14, 0.82), rgba(26, 14, 7, 0.88)),
+                repeating-linear-gradient(
+                    90deg,
+                    rgba(255, 236, 210, 0.025) 0px,
+                    rgba(255, 236, 210, 0.025) 1px,
+                    transparent 1px,
+                    transparent 7px
+                );
+            backdrop-filter: blur(18px) saturate(1.35);
+            -webkit-backdrop-filter: blur(18px) saturate(1.35);
+            border: 1px solid rgba(255, 214, 165, 0.30);
+            box-shadow: 0 18px 45px rgba(22, 11, 4, 0.45),
+                        inset 0 1px 0 rgba(255, 230, 200, 0.20);
             padding: 32px 24px;
             border-radius: 20px;
             text-align: center;
             max-width: 340px;
+            max-height: calc(100vh - 48px);
+            overflow-y: auto;
+            overscroll-behavior: contain;
             animation: slideUpScale 0.4s cubic-bezier(0.4, 0, 0.2, 1);
         }
 
@@ -381,13 +398,14 @@
         .welcome-title {
             font-size: 24px;
             font-weight: 700;
-            color: var(--dlsu-green);
+            color: #ffe9cf;
+            text-shadow: 0 1px 2px rgba(22, 11, 4, 0.5);
             margin-bottom: 8px;
         }
 
         .welcome-subtitle {
             font-size: 14px;
-            color: var(--text-light);
+            color: rgba(247, 236, 223, 0.85);
             margin-bottom: 24px;
             line-height: 1.5;
         }
@@ -530,26 +548,162 @@
         <!-- Welcome Screen -->
         <div class="welcome-screen" id="welcome-screen">
             <div class="welcome-content">
-                <div class="welcome-icon">🗺️</div>
-                <div class="welcome-title">Welcome to Lakan!</div>
+                <img src="{{ url_for('static', filename='images/LAKAN_logo.png') }}"
+                     alt="Lakán logo"
+                     style="width:76px;height:76px;object-fit:contain;margin-bottom:6px;filter:drop-shadow(0 4px 10px rgba(0,0,0,.45))">
+                <div class="welcome-title">Lakán</div>
                 <div class="welcome-subtitle">
-                    Your AI-powered campus navigation assistant. 
-                    Ask me how to get anywhere on campus.
+                    AI Campus Navigator · DLSU-Dasmariñas
                 </div>
-                <button class="welcome-btn" onclick="closeWelcome()">
+
+                <!-- Step 1: GPS toggle (required first) -->
+                <button class="welcome-btn" id="welcomeGpsBtn" onclick="welcomeToggleGPS()"
+                        style="background:transparent;border:1.5px solid rgba(255,214,165,.5);color:#ffd6a5;font-size:14px;padding:10px 18px;">
+                    📍 Turn on GPS
+                </button>
+                <div id="gpsStatus" style="font-size:12.5px;margin-top:8px;min-height:18px;color:rgba(247,236,223,.85)">
+                    Step 1 — turn on GPS so Lakán can verify you're on campus
+                </div>
+
+                <!-- Quick guide -->
+                <div style="text-align:left;background:rgba(0,0,0,.28);border:1px solid rgba(255,214,165,.16);border-radius:12px;padding:10px 14px;margin:14px 0;font-size:12.5px;color:rgba(247,236,223,.9);line-height:1.85">
+                    <b style="color:#ffd6a5">Quick guide</b><br>
+                    📍 Turn on GPS — Lakán checks you're inside the campus<br>
+                    🔐 Admin? Log in below to post announcements<br>
+                    🗺️ Tap <b>Start Navigating</b> (unlocks on-campus)<br>
+                    💬 Ask "How do I get to JFH?" — follow the green route
+                </div>
+
+                <!-- Admin login -->
+                <div style="text-align:left">
+                    <input id="welcomeEmail" type="email" placeholder="Admin email"
+                           style="width:100%;box-sizing:border-box;padding:9px 12px;border-radius:10px;border:1px solid rgba(255,214,165,.25);background:rgba(0,0,0,.32);color:#f7ecdf;font-size:13px;margin-bottom:6px">
+                    <input id="welcomePassword" type="password" placeholder="Password"
+                           style="width:100%;box-sizing:border-box;padding:9px 12px;border-radius:10px;border:1px solid rgba(255,214,165,.25);background:rgba(0,0,0,.32);color:#f7ecdf;font-size:13px">
+                </div>
+                <button class="welcome-btn" id="welcomeLoginBtn" onclick="welcomeAdminLogin()"
+                        style="background:transparent;border:1.5px solid rgba(255,214,165,.45);color:#ffd6a5;font-size:13px;padding:8px 18px;margin-top:8px">
+                    🔐 Login
+                </button>
+                <div id="loginStatus" style="font-size:12px;margin-top:6px;min-height:16px;color:#9fe8c3"></div>
+
+                <!-- Step 2: gated start -->
+                <button class="welcome-btn" id="welcomeStartBtn" onclick="closeWelcome()"
+                        disabled
+                        style="opacity:.45;cursor:not-allowed;margin-top:6px">
                     Start Navigating
                 </button>
             </div>
         </div>
     </div>
 
+    <!-- Desktop page UI glue: welcome modal handlers (GPS toggle, admin
+         login, gated start) + chat overlay controls. The original page's
+         onclick handlers were never defined anywhere, which left it unusable. -->
+    <script>
+        let welcomeGPSOn = false, welcomeInsideCampus = false, welcomeAdmin = false;
+
+        function welcomeUpdateStart() {
+            const btn = document.getElementById('welcomeStartBtn');
+            const ok = welcomeInsideCampus || welcomeAdmin;
+            btn.disabled = !ok;
+            btn.style.opacity = ok ? '1' : '.45';
+            btn.style.cursor = ok ? 'pointer' : 'not-allowed';
+            btn.textContent = ok ? 'Start Navigating' : 'Start Navigating (locked — not on campus)';
+        }
+
+        function welcomeToggleGPS() {
+            const btn = document.getElementById('welcomeGpsBtn');
+            const st = document.getElementById('gpsStatus');
+            if (!navigator.geolocation) { st.textContent = '⚠️ GPS is not available on this device'; return; }
+            if (welcomeGPSOn) {  // toggle off
+                welcomeGPSOn = false; welcomeInsideCampus = false;
+                window.userGPSLocation = null;
+                btn.textContent = '📍 Turn on GPS';
+                st.textContent = 'GPS off — turn it on to unlock navigation';
+                welcomeUpdateStart(); return;
+            }
+            btn.textContent = '📍 Detecting your location…';
+            st.textContent = 'Checking if you are inside the DLSU-D campus…';
+            navigator.geolocation.getCurrentPosition(pos => {
+                welcomeGPSOn = true;
+                window.userGPSLocation = { lat: pos.coords.latitude, lng: pos.coords.longitude };
+                welcomeInsideCampus = !!(window.isInsideCampus &&
+                    window.isInsideCampus(window.userGPSLocation.lat, window.userGPSLocation.lng));
+                btn.textContent = welcomeInsideCampus ? '📍 GPS on — inside campus ✅' : '📍 GPS on — outside campus';
+                st.textContent = welcomeInsideCampus
+                    ? '✅ You are inside DLSU-D — you may start navigating!'
+                    : '⛔ You are outside the campus geofence. Navigation is on-campus only.';
+                st.style.color = welcomeInsideCampus ? '#4ade80' : '#f87171';
+                welcomeUpdateStart();
+            }, () => {
+                btn.textContent = '📍 Turn on GPS';
+                st.textContent = '⚠️ GPS denied — allow location access in your browser to continue';
+                st.style.color = '#f87171';
+            }, { enableHighAccuracy: true, timeout: 10000 });
+        }
+
+        async function welcomeAdminLogin() {
+            const email = document.getElementById('welcomeEmail').value.trim();
+            const password = document.getElementById('welcomePassword').value;
+            const st = document.getElementById('loginStatus');
+            if (!email || !password) { st.textContent = 'Enter email and password'; st.style.color = '#f87171'; return; }
+            st.textContent = 'Signing in…'; st.style.color = '#ffd6a5';
+            try {
+                const res = await fetch('/api/admin/login', {
+                    method: 'POST', headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email, password })
+                });
+                const data = await res.json();
+                if (data.success) {
+                    welcomeAdmin = true;
+                    window.adminMode = window.adminMode || {};
+                    if (window.showAdminModeButton) window.showAdminModeButton();
+                    st.textContent = `✅ Welcome, ${data.name || 'Admin'}!`;
+                    st.style.color = '#4ade80';
+                    welcomeUpdateStart();
+                    // close the welcome modal and show the chatbot textfield
+                    const ws = document.getElementById('welcome-screen');
+                    if (ws) ws.classList.add('hidden');
+                    const co = document.getElementById('chat-overlay');
+                    if (co) co.classList.add('expanded');
+                    if (window.mobileApp) window.mobileApp.addMessage('bot',
+                        '✅ Admin mode ready: tap the 🔧 button (top-right), then click anywhere <b>inside the campus</b> on the map to set your demo location. After that, ask "How do I get to JFH?"');
+                } else {
+                    st.textContent = data.error || 'Invalid email or password.';
+                    st.style.color = '#f87171';
+                }
+            } catch (e) {
+                st.textContent = 'Connection error — try again.';
+                st.style.color = '#f87171';
+            }
+        }
+
+        function closeWelcome() {
+            const el = document.getElementById('welcome-screen');
+            if (el) el.classList.add('hidden');
+            // make the chatbot textfield visible immediately after entry
+            const co = document.getElementById('chat-overlay');
+            if (co) co.classList.add('expanded');
+        }
+        function toggleChat() {
+            const el = document.getElementById('chat-overlay');
+            if (!el) return;
+            el.classList.toggle('expanded');
+            setTimeout(() => { if (window.map) window.map.invalidateSize(); }, 350);
+        }
+        function closeChat() { toggleChat(); }
+        function minimizeChat() { toggleChat(); }
+    </script>
+
     <!-- Leaflet JS -->
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     
     <!-- Your custom scripts -->
-    <script src="{{ url_for('static', filename='js/campus_navigation.js') }}"></script>
-    <script src="{{ url_for('static', filename='js/map_controller.js') }}"></script>
-    <script src="{{ url_for('static', filename='js/main_mobile.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/campus_navigation.js') }}?v=3"></script>
+    <script src="{{ url_for('static', filename='js/map_controller.js') }}?v=2"></script>
+    <script src="{{ url_for('static', filename='js/geofence.js') }}?v=1"></script>
+    <script src="{{ url_for('static', filename='js/main_mobile.js') }}?v=5"></script>
     <script src="/static/js/admin_mode.js"></script>
 
 </body>

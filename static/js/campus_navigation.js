@@ -167,6 +167,37 @@ class CampusNavigationEngine {
             }
         });
 
+        // Step 2c: proximity stitching — pathways that cross or nearly touch
+        // WITHOUT sharing an exact coordinate would otherwise stay isolated
+        // islands in the graph (v1 bug: only 5/20 buildings were reachable).
+        // Connect points of different pathways within STITCH_RADIUS meters.
+        const STITCH_RADIUS = 20;
+        const nodesByPathway = new Map();
+        this.nodes.forEach((node, nodeId) => {
+            if (node.type !== 'pathway') return;
+            if (!nodesByPathway.has(node.pathwayId)) nodesByPathway.set(node.pathwayId, []);
+            nodesByPathway.get(node.pathwayId).push(nodeId);
+        });
+        let stitchCount = 0;
+        const pathwayIds = Array.from(nodesByPathway.keys());
+        for (let a = 0; a < pathwayIds.length; a++) {
+            for (let b = a + 1; b < pathwayIds.length; b++) {
+                for (const na of nodesByPathway.get(pathwayIds[a])) {
+                    for (const nb of nodesByPathway.get(pathwayIds[b])) {
+                        const d = this.calculateDistance(
+                            this.nodes.get(na).coordinates, this.nodes.get(nb).coordinates);
+                        if (d > STITCH_RADIUS) continue;
+                        // skip if an edge already exists (shared-coordinate case)
+                        const existing = this.edges.get(na) || [];
+                        if (existing.some(e => e.to === nb)) continue;
+                        this.addEdge(na, nb, d, { type: 'proximity_stitch' });
+                        stitchCount++;
+                    }
+                }
+            }
+        }
+        console.log(`🧵 Proximity stitching: added ${stitchCount} cross-pathway connections (≤${STITCH_RADIUS}m)`);
+
         // Step 3: Connect buildings to nearest pathway nodes
         this.buildings.forEach((building, buildingId) => {
             const nearestResult = this.findNearestNode(building.coordinates, null, 100);
@@ -290,6 +321,55 @@ class CampusNavigationEngine {
     }
 
     findShortestPath(startLocation, endLocation, preferences = {}) {
+        // 📍 Raw-coordinate start (GPS or admin map pin): build a temporary
+        // virtual user node connected to the nearest pathway nodes, exactly
+        // like building entrances — "connect my location to the nearest
+        // pathway point" routing.
+        let startLabel = startLocation;
+        if (startLocation && typeof startLocation === 'object'
+                && !this.nodes.has(startLocation)) {
+            const c = Array.isArray(startLocation)
+                ? startLocation
+                : [startLocation.lat, startLocation.lng];
+            const USER_NODE = '__user__';
+            // clean any previous user node edges
+            if (this.nodes.has(USER_NODE)) {
+                const oldEdges = this.edges.get(USER_NODE) || [];
+                for (const e of oldEdges) {
+                    const back = this.edges.get(e.to);
+                    if (back) this.edges.set(e.to, back.filter(x => x.to !== USER_NODE));
+                }
+                this.edges.set(USER_NODE, []);
+            } else {
+                this.nodes.set(USER_NODE, {
+                    id: USER_NODE, coordinates: c, type: 'user',
+                    pathwayId: null, index: -1, properties: {}
+                });
+                this.edges.set(USER_NODE, []);
+            }
+            // connect to the 3 nearest pathway nodes within 400m
+            const cands = [];
+            this.nodes.forEach((node, nodeId) => {
+                if (node.type !== 'pathway') return;
+                const d = this.calculateDistance(node.coordinates, c);
+                if (d <= 400) cands.push({ nodeId, distance: d });
+            });
+            cands.sort((x, y) => x.distance - y.distance);
+            const nearest = cands.slice(0, 3);
+            if (nearest.length === 0) {
+                console.error('❌ No pathway within 400m of the user location');
+                return null;
+            }
+            for (const n of nearest) {
+                this.edges.get(USER_NODE).push({ to: n.nodeId, weight: n.distance });
+                if (!this.edges.has(n.nodeId)) this.edges.set(n.nodeId, []);
+                this.edges.get(n.nodeId).push({ to: USER_NODE, weight: n.distance });
+            }
+            startLabel = { name: 'Your location' };
+            console.log(`📍 User node → ${nearest.map(n => n.nodeId).join(', ')}`);
+            return this.findShortestPath(USER_NODE, endLocation, preferences);
+        }
+
         // Normalize building IDs to handle case mismatches (e.g. CHAPEL vs Chapel)
         startLocation = this.normalizeBuildingId(startLocation);
         endLocation = this.normalizeBuildingId(endLocation);
@@ -409,7 +489,7 @@ class CampusNavigationEngine {
         
         // Convert to route object
 // Convert to route object
-        return this.buildRouteObject(path, distances.get(endNodeId), startLocation, endLocation);    }
+        return this.buildRouteObject(path, distances.get(endNodeId), startLabel, endLocation);    }
 
     showRouteFromCoordinates(startCoords, destinationBuildingId) {
         console.log(`🗺️ Routing from [${startCoords.lat}, ${startCoords.lng}] to ${destinationBuildingId}`);

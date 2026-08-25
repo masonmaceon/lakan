@@ -240,22 +240,14 @@ function getStartLocation() {
 }
 
 function isInsideCampusGeofence(location) {
-    const campusBounds = {
-        north: 14.3290,
-        south: 14.3195,
-        east: 120.9650,
-        west: 120.9575
-    };
-    
-    const isInside = location.lat >= campusBounds.south &&
-           location.lat <= campusBounds.north &&
-           location.lng >= campusBounds.west &&
-           location.lng <= campusBounds.east;
-    
+    // Delegates to the shared geofence (static/js/geofence.js) so there is
+    // exactly one definition of the campus boundary everywhere.
+    const isInside = !!(window.isInsideCampus && window.isInsideCampus(location.lat, location.lng));
+
     if (adminMode.enabled) {
         console.log(`🗺️ Location ${isInside ? 'INSIDE' : 'OUTSIDE'} campus geofence`);
     }
-    
+
     return isInside;
 }
 

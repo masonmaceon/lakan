@@ -27,15 +27,23 @@
         }
         .modal-box {
             background:
-                linear-gradient(rgba(20,15,10,0.75), rgba(20,15,10,0.75)),
                 repeating-linear-gradient(
                     90deg,
-                    rgba(255,255,255,0.03) 0px,
-                    rgba(255,255,255,0.03) 1px,
+                    rgba(255,236,210,0.03) 0px,
+                    rgba(255,236,210,0.03) 1px,
                     transparent 1px,
                     transparent 6px
                 ),
-                linear-gradient(135deg, #2b1d13, #1a120c);
+                linear-gradient(135deg, rgba(52, 29, 14, 0.82), rgba(24, 13, 7, 0.88));
+            backdrop-filter: blur(18px) saturate(1.35);
+            -webkit-backdrop-filter: blur(18px) saturate(1.35);
+            border: 1px solid rgba(255, 214, 165, 0.28);
+            box-shadow: 0 18px 45px rgba(22, 11, 4, 0.5),
+                        inset 0 1px 0 rgba(255, 230, 200, 0.18);
+            max-height: calc(100vh - 40px);
+            overflow-y: auto;
+            overscroll-behavior: contain;
+            -webkit-overflow-scrolling: touch;
 
             border-radius: 24px;
             padding: 22px 20px;
@@ -224,6 +232,7 @@
             <h2 style="font-size:18px;font-weight:700;color:#111827;margin:0 0 12px;" id="sheetTitle"></h2>
             <hr style="border:none;border-top:1px solid #f3f4f6;margin-bottom:14px;">
             <p style="font-size:13px;color:#6b7280;margin:0 0 16px;">This announcement was uploaded by the DLSU-D administration.</p>
+            <img id="sheetImage" alt="announcement image" style="display:none;max-width:100%;border-radius:10px;margin:0 0 12px;">
             <a id="sheetPdfLink" href="#" target="_blank" style="
                 display:inline-flex;align-items:center;gap:8px;
                 background:#006341;color:white;
@@ -305,30 +314,31 @@
             <div style="margin-bottom:8px"><img src="{{ url_for('static', filename='images/LAKAN_logo.png') }}" style="width:60px;height:60px;object-fit:contain;mix-blend-mode:screen;"></div>            <h1>Lakán</h1>
             <p class="subtitle">DLSU-Dasmariñas Campus Navigator</p>
 
+            <div class="gps-bar">
+                <div class="gps-dot searching" id="gpsDot"></div>
+                <span id="gpsText">Step 1 — turn on GPS so Lakán can verify you're on campus</span>
+            </div>
+
+            <button onclick="enableGPS()" class="modal-btn" id="gpsBtn" style="background:transparent;border:2px solid #006341;color:#4ade80;">📍 Turn on GPS</button>
+
             <div class="how-box">
-                <p>How to use</p>
+                <p>Quick guide</p>
                 <div>
-                    📍 Enable GPS for live navigation<br>
-                    💬 Ask me where you want to go<br>
-                    🗺️ Follow the green route on the map<br>
-                    — or —<br>
-                    📸 Take or upload a photo to identify a building
+                    📍 Turn on GPS — Lakán checks you're inside the campus<br>
+                    🔐 Admin? Log in below to post announcements<br>
+                    🗺️ Tap <b>Start Navigating</b> (unlocks on-campus)<br>
+                    💬 Ask "How do I get to JFH?" — follow the green route
                 </div>
             </div>
 
-            <div class="gps-bar">
-                <div class="gps-dot searching" id="gpsDot"></div>
-                <span id="gpsText">Tap "Enable GPS" to detect your location</span>
+            <div style="text-align:left">
+                <input id="welcomeEmail" type="email" placeholder="Admin email" class="modal-input" style="margin-bottom:6px">
+                <input id="welcomePassword" type="password" placeholder="Password" class="modal-input" style="margin-bottom:0">
             </div>
+            <button onclick="welcomeAdminLogin()" class="modal-btn" style="margin-top:8px;background:transparent;border:2px solid rgba(255,214,165,.35);color:#ffd6a5;">🔐 Login</button>
+            <div id="loginStatus" style="font-size:12px;margin-top:6px;min-height:16px;color:#9fe8c3"></div>
 
-            <div style="margin-bottom:10px;text-align:left">
-                <label style="font-size:12px;font-weight:600;color:rgba(230,244,238,0.9);display:block;margin-bottom:4px">Your name</label>
-                <input id="welcomeNameInput" type="text" placeholder="e.g. Juan dela Cruz" class="modal-input"
-                    onkeypress="if(event.key==='Enter') startApp()" style="margin-bottom:0">
-            </div>
-
-            <button onclick="enableGPS()" class="modal-btn" id="gpsBtn" style="background:transparent;border:2px solid #006341;color:#4ade80;">📍 Enable GPS</button>
-            <button onclick="startApp()" class="modal-btn" style="margin-top:8px">Start Navigating →</button>
+            <button onclick="startApp()" id="startNavBtn" class="modal-btn" style="margin-top:8px;opacity:.5;cursor:not-allowed" disabled>Start Navigating 🔒</button>
             <p style="font-size:11px;color:#9ca3af;margin:8px 0 0">Animo La Salle! 💚</p>
         </div>
     </div>
@@ -376,45 +386,9 @@
 
     <script>
     // ===== CAMPUS GEOFENCE =====
-    const CAMPUS_POLYGON = [
-        [14.32818662510567,120.9567975958491],[14.32752027108145,120.9567963398511],
-        [14.32768682559514,120.9564808631922],[14.32743336195957,120.9563213849764],
-        [14.32672062496383,120.9565586419667],[14.32656929289275,120.9562289860432],
-        [14.32600900699904,120.9564279336344],[14.3261773960092,120.9570281215504],
-        [14.32519266735426,120.9574789041855],[14.32395197971977,120.9580315661473],
-        [14.32349104329306,120.958063699499],[14.32310766881952,120.9579286375001],
-        [14.32241761489955,120.9582635979482],[14.32222120947024,120.9590161434638],
-        [14.32188034334736,120.9593112488646],[14.32143364999976,120.9596513468901],
-        [14.32092263872406,120.9589530973515],[14.32057047048283,120.9590808781895],
-        [14.32075858830808,120.9599259018387],[14.32073693239591,120.9609000096161],
-        [14.32076541121095,120.9611769641984],[14.32035374877684,120.9615029063688],
-        [14.32036763858504,120.9623031000242],[14.32017497239015,120.9624370551645],
-        [14.3202310757531,120.9637871515548],[14.32167166965975,120.9636030929361],
-        [14.32257304382801,120.96340148091],[14.3224211828718,120.9618762994643],
-        [14.32251613647768,120.961639643329],[14.32284557393603,120.9612595305099],
-        [14.32278662130614,120.9607381027064],[14.32240455164923,120.9600426870383],
-        [14.32233881437341,120.9598603790604],[14.32359148933513,120.9594433417126],
-        [14.32350154949827,120.959077563018],[14.32423172398813,120.958915603129],
-        [14.32457176998089,120.959144665848],[14.32503223320452,120.9590570612722],
-        [14.32519130136358,120.9593736678777],[14.32545841296897,120.9592491755199],
-        [14.32568030275208,120.9597074662772],[14.32647707342846,120.9591047501309],
-        [14.32623955694121,120.9584696810097],[14.32697612393637,120.9581215349532],
-        [14.3273087242948,120.9577273069426],[14.32761986892539,120.9573771415603],
-        [14.3275871025824,120.9570439114976],[14.32799553998608,120.9570339507299],
-        [14.32826793715991,120.9570731271131]
-    ];
-
-    function isInsideCampus(lat, lng) {
-        let inside = false;
-        const n = CAMPUS_POLYGON.length;
-        for (let i = 0, j = n-1; i < n; j = i++) {
-            const xi = CAMPUS_POLYGON[i][1], yi = CAMPUS_POLYGON[i][0];
-            const xj = CAMPUS_POLYGON[j][1], yj = CAMPUS_POLYGON[j][0];
-            if (((yi > lat) !== (yj > lat)) && (lng < (xj-xi)*(lat-yi)/(yj-yi)+xi))
-                inside = !inside;
-        }
-        return inside;
-    }
+    // Campus geofence: now in static/js/geofence.js (shared with the
+    // desktop page). The old inline polygon was self-intersecting and never
+    // matched any campus building — replaced by the official bounding box.
 
     // Global state
     let userGPSLocation = null;
@@ -448,6 +422,7 @@
             text.textContent = userInsideCampus
                 ? '✅ You are inside DLSU-D campus!'
                 : '⚠️ You are outside campus. Navigation is only available on-site.';
+            updateWelcomeStartBtn();
             btn.textContent = '📍 GPS Enabled';
             btn.style.opacity = '0.6';
             // Update crosshair button state based on campus status
@@ -465,15 +440,84 @@
         }, {enableHighAccuracy:true, timeout:10000});
     }
 
+    function updateWelcomeStartBtn() {
+        const btn = document.getElementById('startNavBtn');
+        if (!btn) return;
+        const adminInside = !!(window.adminMode && window.adminMode.customLocation);
+        const ok = (gpsChecked && userInsideCampus) || adminInside;
+        btn.disabled = !ok;
+        btn.style.opacity = ok ? '1' : '.5';
+        btn.style.cursor = ok ? 'pointer' : 'not-allowed';
+        btn.textContent = ok ? 'Start Navigating →' : 'Start Navigating 🔒 (outside campus)';
+    }
+
+    async function welcomeAdminLogin() {
+        const email = document.getElementById('welcomeEmail').value.trim();
+        const password = document.getElementById('welcomePassword').value;
+        const st = document.getElementById('loginStatus');
+        if (!email || !password) { st.textContent = 'Enter email and password'; st.style.color = '#f87171'; return; }
+        st.textContent = 'Signing in…'; st.style.color = '#ffd6a5';
+        try {
+            const res = await fetch('/api/admin/login', {
+                method: 'POST', headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email, password })
+            });
+            const data = await res.json();
+            if (data.success) {
+                isAdminLoggedIn = true;
+                window.adminMode = window.adminMode || {};
+                document.getElementById('uploadMemoBtn').style.display = 'flex';
+                const sb = document.getElementById('settingsBtn');
+                sb.innerHTML = '<i class="fas fa-sign-out-alt"></i>';
+                sb.title = 'Logout';
+                sb.onclick = adminLogout;
+                if (window.showAdminModeButton) window.showAdminModeButton();
+                st.textContent = `✅ Welcome, ${data.name || 'Admin'}! Upload tools + 🔧 admin mode unlocked.`;
+                st.style.color = '#4ade80';
+                // close the welcome modal so the app + chatbot textfield are usable
+                const wmodal = document.getElementById('welcomeModal');
+                if (wmodal) {
+                    wmodal.style.transition = 'opacity 0.3s';
+                    wmodal.style.opacity = '0';
+                    setTimeout(() => { wmodal.remove(); }, 300);
+                }
+                if (window.mobileApp) {
+                    window.mobileApp.addMessage('bot',
+                        `✅ Welcome, ${data.name || 'Admin'}! To demo from anywhere: tap the 🔧 button (top-right), then click anywhere <b>inside the campus</b> on the map to set your location — after that, navigation and building searches work normally.`);
+                }
+                updateWelcomeStartBtn();
+            } else {
+                st.textContent = data.error || 'Invalid email or password.';
+                st.style.color = '#f87171';
+            }
+        } catch (e) {
+            st.textContent = 'Connection error — try again.';
+            st.style.color = '#f87171';
+        }
+    }
+
     function startApp() {
-        if (!gpsChecked) {
+        const adminInside = !!(window.adminMode && window.adminMode.customLocation);
+        if (!gpsChecked && !adminInside) {
             document.getElementById('gpsText').textContent = '⚠️ Please enable GPS first before navigating.';
             document.getElementById('gpsDot').className = 'gps-dot outside';
             document.getElementById('gpsBtn').style.border = '2px solid #dc2626';
             return;
         }
 
-        const name = (document.getElementById('welcomeNameInput').value||'').trim();
+        if (!userInsideCampus) {
+            const adminLoc = (window.adminMode && window.adminMode.customLocation) || null;
+            const adminInside = adminLoc && window.isInsideCampus(adminLoc.lat, adminLoc.lng);
+            if (!adminInside) {
+                document.getElementById('gpsText').textContent =
+                    '⛔ You appear to be OUTSIDE the DLSU-D campus. Lakán navigation is an on-campus feature — come visit us! 🎓';
+                document.getElementById('gpsDot').className = 'gps-dot outside';
+                return;
+            }
+        }
+
+        const nameEl = document.getElementById('welcomeNameInput');
+        const name = nameEl ? (nameEl.value||'').trim() : '';
         const modal = document.getElementById('welcomeModal');
         modal.style.transition = 'opacity 0.3s';
         modal.style.opacity = '0';
@@ -716,7 +760,19 @@
     function openAnnouncementSheet(item) {
         document.getElementById('sheetTitle').textContent = item.title;
         document.getElementById('sheetDate').textContent = item.uploaded_at;
-        document.getElementById('sheetPdfLink').href = `/uploads/memos/${item.filename}`;
+        const isImage = /\.(png|jpe?g|gif|webp)$/i.test(item.filename);
+        const img = document.getElementById('sheetImage');
+        const pdfLink = document.getElementById('sheetPdfLink');
+        if (isImage) {
+            img.src = `/uploads/memos/${item.filename}`;
+            img.style.display = 'block';
+            pdfLink.style.display = 'none';
+        } else {
+            img.style.display = 'none';
+            img.src = '';
+            pdfLink.style.display = 'inline-flex';
+            pdfLink.href = `/uploads/memos/${item.filename}`;
+        }
         const sheet = document.getElementById('announcementSheet');
         sheet.style.display = 'flex';
     }
@@ -747,12 +803,13 @@
     </script>
 
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-    <script src="{{ url_for('static', filename='js/campus_navigation.js') }}?v=6"></script>
+    <script src="{{ url_for('static', filename='js/campus_navigation.js') }}?v=7"></script>
+    <script src="{{ url_for('static', filename='js/geofence.js') }}?v=1"></script>
     <script src="{{ url_for('static', filename='js/map_controller.js') }}?v=3"></script>
     <script src="{{ url_for('static', filename='js/explore_mode.js') }}?v=1"></script>
     <script src="{{ url_for('static', filename='js/admin_mode.js') }}"></script>
     <script src="{{ url_for('static', filename='js/camera_detector.js') }}?v=4"></script>
-    <script src="{{ url_for('static', filename='js/main_mobile.js') }}?v=9"></script>
+    <script src="{{ url_for('static', filename='js/main_mobile.js') }}?v=11"></script>
 
     <!-- Meet the Devs Modal -->
     <div id="meetDevsModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.6);backdrop-filter:blur(6px);z-index:99999;display:none;align-items:center;justify-content:center;padding:20px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;">
