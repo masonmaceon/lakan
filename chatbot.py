@@ -513,33 +513,16 @@ class CampusChatbot:
             ]
         }
 
-    def get_memo_context(self):
-        """Fetch memo contents from DB to inject into system prompt"""
+    def get_memo_context(self, query=None):
+        """Retrieve relevant memo content to inject into the system prompt.
+
+        Embeds the user's question and retrieves the most relevant chunks
+        (vector → keyword → latest-memos fallbacks). See
+        rag_processor.retrieve_relevant_chunks.
+        """
         try:
-            import mysql.connector
-            from dotenv import load_dotenv
-            load_dotenv()
-
-            conn = mysql.connector.connect(
-                host=os.getenv('MYSQL_HOST', 'localhost'),
-                port=int(os.getenv('MYSQL_PORT', 3306)),
-                user=os.getenv('MYSQL_USER', 'root'),
-                password=os.getenv('MYSQL_PASSWORD', ''),
-                database=os.getenv('MYSQL_DATABASE', 'lakan_db')
-            )
-            cursor = conn.cursor(dictionary=True)
-            cursor.execute("SELECT title, content FROM memos WHERE content != '' ORDER BY uploaded_at DESC LIMIT 5")
-            rows = cursor.fetchall()
-            conn.close()
-
-            if not rows:
-                return ""
-
-            memo_text = "Official DLSU-D announcements and memos:\n"
-            for row in rows:
-                memo_text += f"\n--- {row['title']} ---\n{row['content'][:4000]}\n"
-            return memo_text
-
+            from rag_processor import retrieve_relevant_chunks
+            return retrieve_relevant_chunks(query or "", k=4)
         except Exception as e:
             print(f"⚠️ Could not load memo context: {e}")
             return ""
@@ -556,7 +539,7 @@ class CampusChatbot:
             ])
 
             # Fetch memo contents from DB for RAG
-            memo_context = self.get_memo_context()
+            memo_context = self.get_memo_context(user_message)
 
             system_prompt = f"""You are Lakán, the official campus navigation assistant for De La Salle University - Dasmariñas (DLSU-D).
 

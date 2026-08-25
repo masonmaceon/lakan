@@ -5,6 +5,16 @@
 
 console.log('🚀 Starting Mobile Campus Navigation...');
 
+// Resolve the first existing element id (desktop and mobile pages use
+// different ids for the same things).
+function byId(...ids) {
+    for (const id of ids) {
+        const el = document.getElementById(id);
+        if (el) return el;
+    }
+    return null;
+}
+
 // Global state
 let mapController = null;
 let navigationEngine = null;
@@ -15,9 +25,11 @@ let lastMentionedBuilding = null; // tracks last building shown/mentioned
 document.addEventListener('DOMContentLoaded', async () => {
     try {
         console.log('📱 DOM loaded, initializing mobile app...');
-        
-        // Initialize map controller
-        mapController = new CampusMapController('map');
+
+        // Initialize map controller (desktop uses #map-container, mobile #map)
+        const mapEl = byId('map', 'map-container');
+        if (!mapEl) throw new Error('No map container element found on this page');
+        mapController = new CampusMapController(mapEl.id);
         await mapController.initialize();
         
         // Initialize navigation engine
@@ -47,9 +59,14 @@ document.addEventListener('DOMContentLoaded', async () => {
  * Setup chatbot functionality
  */
 function setupChatbot() {
-    const userInput = document.getElementById('userInput');
-    const sendBtn = document.getElementById('sendBtn');
-    
+    const userInput = byId('userInput', 'user-input');
+    const sendBtn = byId('sendBtn') || document.querySelector('.send-btn');
+
+    if (!userInput || !sendBtn) {
+        console.warn('⚠️ Chat input elements not found — chat disabled');
+        return;
+    }
+
     // Send message on button click
     sendBtn.addEventListener('click', () => {
         sendMessage();
@@ -85,7 +102,8 @@ function setupChatbotToggle() {
  * Send user message
  */
 async function sendMessage() {
-    const userInput = document.getElementById('userInput');
+    const userInput = byId('userInput', 'user-input');
+    if (!userInput) return;
     const message = userInput.value.trim();
     
     if (!message) return;
@@ -333,6 +351,19 @@ function renderTransportChips(chips, nearestGate) {
 function showBuildingOnMap(buildingId, displayName = null) {
     if (!navigationEngine || !mapController) return;
 
+    // 🎓 Geofence: building reveals are an on-campus feature, like routing
+    const geoLoc = (window.adminMode && window.adminMode.customLocation) || window.userGPSLocation || null;
+    if (!geoLoc) {
+        console.log('🚫 Building reveal blocked: no verified location');
+        addMessage('bot', '📍 <b>Turn on GPS first</b> so Lakán can verify you are inside the DLSU-D campus — building locations are an on-campus feature.');
+        return;
+    }
+    if (window.isInsideCampus && !window.isInsideCampus(geoLoc.lat, geoLoc.lng)) {
+        console.log('🚫 Building reveal blocked: user is outside the campus geofence');
+        addMessage('bot', '🎓 <b>On-campus feature.</b> You appear to be outside DLSU-D, so building locations are hidden. Come visit us!');
+        return;
+    }
+
     let coords = null;
     let name = displayName || buildingId;
 
@@ -383,6 +414,20 @@ function isFollowUpNavigation(text) {
 
 function showNavigation(start, destination) {
     console.log(`📍 Navigation: ${start} → ${destination}`);
+
+    // 🎓 Geofence: routing is an on-campus feature — requires a verified
+    // location (GPS or admin custom location) INSIDE the campus box.
+    const geoLoc = (window.adminMode && window.adminMode.customLocation) || window.userGPSLocation || null;
+    if (!geoLoc) {
+        console.log('🚫 Navigation blocked: no verified location');
+        addMessage('bot', '📍 <b>Turn on GPS first</b> so Lakán can verify you are inside the DLSU-D campus before navigating.');
+        return;
+    }
+    if (window.isInsideCampus && !window.isInsideCampus(geoLoc.lat, geoLoc.lng)) {
+        console.log('🚫 Navigation blocked: user is outside the campus geofence');
+        addMessage('bot', '🎓 <b>Navigation is on-campus only.</b> Your location appears to be outside DLSU-D. Come visit us!');
+        return;
+    }
     
     if (!navigationEngine || !mapController) {
         console.error('Navigation engine or map controller not initialized');
@@ -390,21 +435,13 @@ function showNavigation(start, destination) {
     }
     
     try {
-        // Check if admin mode is enabled and use custom location
-        let actualStart = start;
-        
-        if (window.adminMode && window.adminMode.enabled && window.adminMode.customLocation) {
-            // Find the nearest pathway node to the admin location
-            const customLoc = window.adminMode.customLocation;
-            const result = navigationEngine.findNearestNode([customLoc.lat, customLoc.lng]);  // ← Array!
-            
-            if (result && result.nodeId) {  // ← Check for nodeId
-                actualStart = result.nodeId;  // ← Use nodeId
-                console.log(`🔧 Using nearest pathway node: ${result.nodeId}`);
-            } else {
-                console.log('⚠️ Could not find nearest node, using default start');
-            }
-        }
+        // Route from the user's actual verified location (admin pin or GPS).
+        // findShortestPath connects it to the nearest pathway nodes via a
+        // virtual user node — no more hard-coded Gate 1 starts.
+        const userStart = geoLoc;
+        let actualStart = userStart || start;
+        console.log(`🚩 Starting route from user location:`,
+            userStart ? [userStart.lat, userStart.lng] : start);
         
         // Clear previous route
         mapController.clearRoute();
@@ -432,9 +469,11 @@ function showNavigation(start, destination) {
                 window.onUserArrived = null;
             };
             
-            // Expand chatbot if minimized
+            // Expand chatbot if minimized (element missing on the desktop
+            // page — this unguarded access threw after every successful
+            // route, printing a false "error showing the route")
             const chatbotContainer = document.getElementById('chatbotContainer');
-            if (chatbotContainer.classList.contains('minimized')) {
+            if (chatbotContainer && chatbotContainer.classList.contains('minimized')) {
                 chatbotContainer.classList.remove('minimized');
             }
         } else {
