@@ -19,7 +19,7 @@ ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg'}
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
 # Set your Roboflow API key
-ROBOFLOW_API_KEY = os.getenv('ROBOFLOW_API_KEY', 'a7egLGQSh1aNH2WQs2xC')
+ROBOFLOW_API_KEY = os.getenv('ROBOFLOW_API_KEY', '')
 os.environ['ROBOFLOW_API_KEY'] = ROBOFLOW_API_KEY
 
 # Model configuration
