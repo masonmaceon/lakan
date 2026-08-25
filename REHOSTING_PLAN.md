@@ -82,7 +82,7 @@ chunk (~800/100) → embed → `memo_chunks` (arrays) → query → embed questi
 cosine top-4 → DeepSeek prompt. Fallbacks: keyword scoring → latest memos.
 
 ### Phase 5 — security & student pilot polish (remaining)
-- Delete placeholder admin before pilot
+- ~~Delete placeholder admin~~ ✅ done — no placeholder is seeded anymore
 - Session tokens for admin (currently login is per-page, no cookie)
 - Feedback capture ("was this helpful?"), usage analytics
 - Model evaluation plan (below)
@@ -112,5 +112,5 @@ The full history lives on this repo's working branch. Download
 ## 8. Open decisions (owner's call)
 1. Gate 3 sits ~50 m outside the official geofence box (west bound 120.9575
    vs Gate 3 at ~120.95697) — widen to 120.9567 or keep as-is?
-2. Delete placeholder admin (`admin@lakan.local`) before pilot?
+2. ~~Delete placeholder admin~~ ✅ resolved — placeholder seeding removed
 3. Keep Roboflow model `lakan-5ugrp/1` for the pilot? (confidence gate live)

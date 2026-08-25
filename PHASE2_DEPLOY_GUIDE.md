@@ -125,9 +125,8 @@ Render **`/healthz`** URL → every **5 minutes**.
 ---
 
 ## Changing the admin password later
-Seeded accounts: `aaf4837@dlsud.edu.ph` (owner) and the placeholder
-`admin@lakan.local` / `lakan-admin` (**delete before the pilot**:
-`DELETE FROM admins WHERE email='admin@lakan.local';` in Neon's editor).
+Seeded account: `aaf4837@dlsud.edu.ph` (owner — password shared out-of-band,
+never stored in the repo). No placeholder admin exists anymore.
 
 To create/change an admin on the live app:
 1. In Render → Environment, temporarily add `ADMIN_SETUP_TOKEN` = any long

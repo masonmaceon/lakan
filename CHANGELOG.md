@@ -52,6 +52,7 @@ revival. Dates are 2026-08-19.
 | `8ec836d` | Welcome modal rebuilt to the original design: logo, inline login fields, quick guide, GPS toggle first, Start Navigating hard-disabled until inside campus |
 | `a78caae` | **Official geofence**: team's bounding box (from `admin_mode.js`) becomes single source of truth in `geofence.py`/`geofence.js`; strict reveals (no-location requests blocked too); removed admin auto location-pin |
 | `fcd2ec0` | Owner admin account added (hash only); welcome-modal logins reveal the 🔧 Admin Mode button |
+| *(recovery)* | Sandbox recycle on 2026-08-25 — all work rebuilt inside the session repo; placeholder admin seeding removed, docs scrubbed of credentials |
 | `1dfe44e` | Admin login closes the modal; chatbot textfield visible immediately after entry (desktop auto-expands) |
 | `7304fcb` | **Routing fixed**: proximity stitching (355 cross-pathway connections ≤20 m — graph was fragmented islands, 5/20 reachable → 20/20); virtual user node ("connect my location to nearest pathway point"); modals fit the screen (scrollable) |
 | `85b1e9a` | Fixed false "error showing the route" (unguarded `chatbotContainer` access on desktop) |
@@ -59,7 +60,7 @@ revival. Dates are 2026-08-19.
 
 ## Known issues / notes
 - `legacy/` holds Firestore-era scripts (not used at runtime)
-- Placeholder admin `admin@lakan.local` / `lakan-admin` should be removed
-  before the student pilot
+- No default placeholder admin is seeded anymore — only the owner account
+  (plus optional ADMIN_EMAIL/ADMIN_PASSWORD when explicitly set)
 - Free-tier reminders: Render sleeps after ~15 min idle (UptimeRobot fixes),
   filesystems are ephemeral (why files live in the DB)

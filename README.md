@@ -37,9 +37,9 @@ psql "$DATABASE_URL" -f schema_rag.sql      # memo chunk table (RAG)
 .venv/bin/python app.py         # → http://localhost:5000
 ```
 
-**Admin accounts:** `aaf4837@dlsud.edu.ph` (owner) and the placeholder
-`admin@lakan.local` / `lakan-admin` (remove before the student pilot).
-Change passwords via the token-protected `/api/admin/create`.
+**Admin accounts:** the owner account (`aaf4837@dlsud.edu.ph`) is seeded
+automatically — its password is never stored in this repo. Add more admins
+via the token-protected `/api/admin/create` (see the deploy guide).
 
 Pages: `/` desktop · `/mobile` student app · `/camera` detection ·
 `/admin` uploads · `/healthz` uptime ping.
