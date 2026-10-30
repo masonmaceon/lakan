@@ -1,0 +1,15 @@
+# Optional: dependencies needed ONLY for model training / experimentation.
+#
+# These are deliberately kept out of requirements.txt so that
+# `pip install -r requirements.txt` stays small for people who just want to
+# run the web app. Install this file only if you plan to (re)train the
+# building classifier with scripts/train_roboflow.py.
+#
+#   pip install -r requirements-ml.txt
+
+torch>=2.0.0
+torchvision>=0.15.0
+scikit-learn>=1.3.0
+matplotlib>=3.7.0
+seaborn>=0.12.0
+numpy>=1.24.0

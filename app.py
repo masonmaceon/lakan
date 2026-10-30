@@ -61,11 +61,21 @@ def get_db_connection():
         return None
 
 # Roboflow ML Detection Model Setup
-ROBOFLOW_API_KEY = os.getenv('ROBOFLOW_API_KEY', 'usYcCGAW2Ua9fnamEyLf')
-os.environ['ROBOFLOW_API_KEY'] = ROBOFLOW_API_KEY
+#
+# NOTE: there is intentionally NO default/fallback key here. Camera-based
+# building detection stays disabled until a valid ROBOFLOW_API_KEY is supplied
+# through the environment (see .env.example). This is a setup requirement,
+# not a bug — see README.md -> "Camera detection (not functional yet)".
+ROBOFLOW_API_KEY = os.getenv('ROBOFLOW_API_KEY')
 MODEL_ID = "lakan-5ugrp/1"
+ROBOFLOW_ENABLED = bool(ROBOFLOW_API_KEY)
 
-print("✅ Roboflow HTTP API ready")
+if ROBOFLOW_ENABLED:
+    os.environ['ROBOFLOW_API_KEY'] = ROBOFLOW_API_KEY
+    print("✅ Roboflow HTTP API ready")
+else:
+    print("⚠️  ROBOFLOW_API_KEY is not set — camera building detection is DISABLED")
+    print("   This is expected on a fresh clone. See README.md -> 'Camera detection'.")
 
 # Import your modules
 try:
@@ -250,6 +260,14 @@ def pathway_collector():
 @app.route('/detect-building', methods=['POST'])
 def detect_building():
     print("📸 /detect-building endpoint called")
+
+    if not ROBOFLOW_ENABLED:
+        return jsonify({
+            'success': False,
+            'error': 'Camera detection is not configured. Set ROBOFLOW_API_KEY in your '
+                     '.env file and restart the server. See README.md -> "Camera detection".',
+            'not_configured': True
+        }), 503
 
     if 'image' not in request.files:
         return jsonify({'success': False, 'error': 'No image provided'})
@@ -607,19 +625,10 @@ def admin_login():
         cursor = conn.cursor(dictionary=True)
         cursor.execute("SELECT * FROM admins WHERE email = %s AND password = %s", (email, password))
         admin = cursor.fetchone()
-        cursor.execute("SELECT * FROM admins WHERE email = %s AND password = %s", (email, password))
-        admin = cursor.fetchone()
-        print(f"🔍 Login: email={email} password={password} result={admin}")
+        # NOTE: never log the submitted password.
+        print(f"🔍 Login attempt: email={email} match={bool(admin)}")
+        cursor.close()
         conn.close()
-        cursor.execute("SELECT DATABASE()")
-        db_name = cursor.fetchone()
-        print(f"🔍 Connected to database: {db_name}")
-        cursor.execute("SELECT COUNT(*) as cnt FROM admins")
-        count = cursor.fetchone()
-        print(f"🔍 Admins count: {count}")
-        cursor.execute("SELECT * FROM admins WHERE email = %s AND password = %s", (email, password))
-        admin = cursor.fetchone()
-        print(f"🔍 Login result: {admin}")
         if admin:
             return jsonify({'success': True, 'name': admin.get('name', '')})
         else:
@@ -652,12 +661,24 @@ def upload_memo():
         if conn:
             try:
                 cursor = conn.cursor()
+                # NOTE: `content` holds the extracted PDF text used by the RAG
+                # chatbot. It must match what rag_processor.py updates.
                 cursor.execute("""
                     CREATE TABLE IF NOT EXISTS memos (
                         id INT AUTO_INCREMENT PRIMARY KEY,
                         title VARCHAR(255) NOT NULL,
                         filename VARCHAR(255) NOT NULL,
+                        content LONGTEXT,
                         uploaded_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                    )
+                """)
+                cursor.execute("""
+                    CREATE TABLE IF NOT EXISTS admins (
+                        id INT AUTO_INCREMENT PRIMARY KEY,
+                        email VARCHAR(255) NOT NULL UNIQUE,
+                        password VARCHAR(255) NOT NULL,
+                        name VARCHAR(255) DEFAULT '',
+                        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
                     )
                 """)
                 cursor.execute(
@@ -723,7 +744,8 @@ if __name__ == '__main__':
     print("=" * 60)
     print("  Chatbot: ✅ Ready" if chatbot else "  Chatbot: ❌ Not loaded")
     print("  Database: ✅ Connected" if db_pool else "  Database: ❌ Not connected")
-    print("  ML Detection: ✅ Ready (Roboflow HTTP API)")    
+    print("  ML Detection: ✅ Ready (Roboflow HTTP API)" if ROBOFLOW_ENABLED
+          else "  ML Detection: ⚠️  Disabled (no ROBOFLOW_API_KEY)")
     print("=" * 60)
     print("\n🚀 Starting Flask server...")
     print("📍 Main app: http://localhost:5000")
